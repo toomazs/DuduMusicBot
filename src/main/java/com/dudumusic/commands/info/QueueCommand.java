@@ -29,7 +29,7 @@ public class QueueCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Mostrar a fila de musicas";
+        return "Mostra a fila de músicas";
     }
 
     @Override
@@ -47,7 +47,7 @@ public class QueueCommand implements Command {
 
         if (currentTrack == null && queue.isEmpty()) {
             event.replyEmbeds(
-                    EmbedFactory.info("Fila vazia", "Nao ha musicas na fila")
+                    EmbedFactory.info("Fila vazia", "Não há músicas na fila")
             ).queue();
             return;
         }
@@ -60,7 +60,7 @@ public class QueueCommand implements Command {
             event.replyEmbeds(embed)
                     .addActionRow(
                             Button.secondary("queue:prev:0", "Anterior").asDisabled(),
-                            Button.secondary("queue:next:1", "Proximo"),
+                            Button.secondary("queue:next:1", "Próximo"),
                             Button.danger("queue:clear", "Limpar fila")
                     )
                     .queue();
@@ -72,7 +72,7 @@ public class QueueCommand implements Command {
                     .queue();
         }
 
-        logger.info("Fila exibida para o servidor: {} (pagina 0/{} paginas)", guildId, totalPages);
+        logger.info("Fila exibida para o servidor: {} (página 0/{} páginas)", guildId, totalPages);
     }
 
     public static MessageEmbed createQueueEmbed(AudioTrack currentTrack, BlockingQueue<AudioTrack> queue, int page) {
@@ -90,7 +90,6 @@ public class QueueCommand implements Command {
                     false);
         }
 
-        // Show queue
         if (!queue.isEmpty()) {
             List<AudioTrack> tracks = new ArrayList<>(queue);
             int totalPages = (int) Math.ceil((double) tracks.size() / TRACKS_PER_PAGE);
@@ -107,19 +106,19 @@ public class QueueCommand implements Command {
                         TimeFormat.format(track.getDuration())));
             }
 
-            builder.addField("Proximas musicas", queueText.toString(), false);
+            builder.addField("Próximas músicas", queueText.toString(), false);
 
             long totalDuration = tracks.stream()
                     .mapToLong(AudioTrack::getDuration)
                     .sum();
 
-            builder.setFooter(String.format("Pagina %d/%d - %d musicas - Total: %s",
+            builder.setFooter(String.format("Pagina %d/%d - %d músicas - Total: %s",
                     page + 1,
                     totalPages,
                     tracks.size(),
                     TimeFormat.formatVerbose(totalDuration)));
         } else {
-            builder.setDescription("Nenhuma musica na fila");
+            builder.setDescription("Nenhuma música na fila");
         }
 
         return builder.build();

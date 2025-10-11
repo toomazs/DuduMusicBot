@@ -21,7 +21,7 @@ public class ClearCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Clear the entire queue";
+        return "Limpa a fila de músicas";
     }
 
     @Override

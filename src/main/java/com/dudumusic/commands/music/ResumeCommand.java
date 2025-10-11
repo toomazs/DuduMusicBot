@@ -21,7 +21,7 @@ public class ResumeCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Resume playback";
+        return "Despausa a música atual";
     }
 
     @Override

@@ -17,15 +17,16 @@ public class PlayerConfig {
             return instance;
         }
 
-
-    logger.info("Configurando player de audio..");
+        logger.info("Configurando player de áudio..");
 
     instance = new DefaultAudioPlayerManager();
 
+    // yt
     YoutubeAudioSourceManager youtubeManager = new YoutubeAudioSourceManager();
     instance.registerSourceManager(youtubeManager);
     logger.info("Fonte YouTube registrada");
 
+    // popotify
     SpotifySourceManager spotifyManager = new SpotifySourceManager(
             null,
             BotConfig.getSpotifyClientId(),
@@ -33,13 +34,14 @@ public class PlayerConfig {
             "BR",
             instance
     );
-    instance.registerSourceManager(spotifyManager);
+        instance.registerSourceManager(spotifyManager);
         logger.info("Fonte Spotify registrada");
 
+        // audios remotos (soundcloud, http, etc)
         AudioSourceManagers.registerRemoteSources(instance);
         logger.info("Fontes remotas registradas");
 
-        logger.info("Player de audio configurado com sucesso");
+        logger.info("Player de áudio configurado com sucesso");
         return instance;
 
     }

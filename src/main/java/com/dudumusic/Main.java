@@ -24,9 +24,10 @@ public class Main {
 
     public static void main(String[] args) {
         try {
+
             logger.info("Iniciando bot...");
 
-            logger.info("1 - Carregando configs");
+            logger.info("1 - Carregando configurações");
             BotConfig.load();
 
             logger.info("2 - Configurando audio-player");
@@ -47,7 +48,7 @@ public class Main {
                     .build()
                     .awaitReady();
 
-            logger.info("JDA pronto");
+            logger.info("JDA pronto!");
 
             logger.info("4 - Registrando comandos slash");
             registerCommands(jda);
@@ -59,7 +60,6 @@ public class Main {
     }
 
     private static void registerCommands(JDA jda) {
-        // todo: music commands
         commands.add(new PlayCommand());
         commands.add(new StopCommand());
         commands.add(new SkipCommand());
@@ -71,7 +71,6 @@ public class Main {
         commands.add(new SeekCommand());
         commands.add(new ClearCommand());
 
-        // todo: info commands
         commands.add(new QueueCommand());
         commands.add(new NowPlayingCommand());
 

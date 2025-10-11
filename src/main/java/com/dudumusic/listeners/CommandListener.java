@@ -18,7 +18,7 @@ public class CommandListener extends ListenerAdapter {
         for (Command command : Main.getCommands()) {
             if (command.getName().equals(commandName)) {
                 try {
-                    logger.info("Executando comando: /{} pelo usuario: {} no servidor: {}",
+                    logger.info("Executando comando: /{} pelo usuário: {} no servidor: {}",
                             commandName,
                             event.getUser().getAsTag(),
                             event.getGuild().getName());

@@ -22,13 +22,13 @@ public class LoopCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Definir modo de repeticao";
+        return "Define modo de repetição";
     }
 
     @Override
     public List<OptionData> getOptions() {
         return List.of(
-                new OptionData(OptionType.STRING, "mode", "Modo de repeticao", true)
+                new OptionData(OptionType.STRING, "mode", "Modo de repetição", true)
                         .addChoice("Desligado", "off")
                         .addChoice("Musica", "track")
                         .addChoice("Fila", "queue")
@@ -56,15 +56,15 @@ public class LoopCommand implements Command {
         };
 
         String description = switch (mode) {
-            case TRACK -> "A musica atual sera repetida";
-            case QUEUE -> "A fila sera repetida";
-            case OFF -> "Repeticao desativada";
+            case TRACK -> "A música atual será repetida";
+            case QUEUE -> "A fila será repetida";
+            case OFF -> "Repetição desativada";
         };
 
         event.replyEmbeds(
-                EmbedFactory.success("Modo de repeticao: " + modeText, description)
+                EmbedFactory.success("Modo de repetição: " + modeText, description)
         ).queue();
 
-        logger.info("Modo de repeticao definido para {} no servidor: {}", mode, guildId);
+        logger.info("Modo de repetição definido para {} no servidor: {}", mode, guildId);
     }
 }

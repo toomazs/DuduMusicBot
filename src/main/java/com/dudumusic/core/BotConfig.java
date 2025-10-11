@@ -14,7 +14,7 @@ public class BotConfig {
     private static String spotifyClientSecret;
 
     public static void load() {
-        logger.info("Carregando config");
+        logger.info("Carregando configuração");
 
         try {
             dotenv = Dotenv.configure()
@@ -26,21 +26,21 @@ public class BotConfig {
             spotifyClientSecret = getEnv("SPOTIFY_CLIENT_SECRET");
 
             if (token == null || token.isEmpty()) {
-                throw new IllegalStateException("TOKEN e obrigatorio no .env");
+                throw new IllegalStateException("TOKEN é obrigatório no .env");
             }
 
             if (spotifyClientId == null || spotifyClientId.isEmpty()) {
-                throw new IllegalStateException("SPOTIFY_CLIENT_ID e obrigatorio no .env");
+                throw new IllegalStateException("SPOTIFY_CLIENT_ID é obrigatório no .env");
             }
 
             if (spotifyClientSecret == null || spotifyClientSecret.isEmpty()) {
-                throw new IllegalStateException("SPOTIFY_CLIENT_SECRET e obrigatorio no .env");
+                throw new IllegalStateException("SPOTIFY_CLIENT_SECRET é obrigatório no .env");
             }
 
-            logger.info("Config carregada com sucesso");
+            logger.info("Configuração carregada com sucesso");
 
         } catch (Exception e) {
-            logger.error("Falha ao carregar configs: {}", e.getMessage());
+            logger.error("Falha ao carregar configurações: {}", e.getMessage());
             throw e;
         }
     }

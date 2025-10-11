@@ -2,3 +2,7 @@
 test/
 target/
 nul
+*.log
+.idea/
+.claude/
+.mvn/

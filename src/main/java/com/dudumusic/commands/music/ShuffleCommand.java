@@ -22,7 +22,7 @@ public class ShuffleCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Shuffle the queue";
+        return "Embaralha a fila de músicas";
     }
 
     @Override

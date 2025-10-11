@@ -21,7 +21,7 @@ public class StopCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Stop playback and clear the queue";
+        return "Para tudo e limpa a fila";
     }
 
     @Override

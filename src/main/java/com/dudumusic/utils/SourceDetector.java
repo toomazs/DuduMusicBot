@@ -7,18 +7,16 @@ public class SourceDetector {
     private static final Pattern SPOTIFY_PATTERN = Pattern.compile("(https?://)?(open\\.)?spotify\\.com/.+");
     private static final Pattern YOUTUBE_PATTERN = Pattern.compile("(https?://)?(www\\.)?(youtube\\.com|youtu\\.be)/.+");
     private static final Pattern SOUNDCLOUD_PATTERN = Pattern.compile("(https?://)?(www\\.)?soundcloud\\.com/.+");
-    private static final Pattern BANDCAMP_PATTERN = Pattern.compile("(https?://)?([a-zA-Z0-9-]+\\.)?bandcamp\\.com/.+");
-    private static final Pattern TWITCH_PATTERN = Pattern.compile("(https?://)?(www\\.)?twitch\\.tv/.+");
     private static final Pattern APPLE_MUSIC_PATTERN = Pattern.compile("(https?://)?music\\.apple\\.com/.+");
-    private static final Pattern DEEZER_PATTERN = Pattern.compile("(https?://)?(www\\.)?deezer\\.com/.+");
+    private static final Pattern APPLE_MUSIC_PLAYLIST_PATTERN = Pattern.compile("(https?://)?music\\.apple\\.com/.+/playlist/.+");
+    private static final Pattern DEEZER_PATTERN = Pattern.compile("(https?://)?((www\\.|link\\.)?deezer\\.com)/.+");
+    private static final Pattern DEEZER_PLAYLIST_PATTERN = Pattern.compile("(https?://)?((www\\.|link\\.)?deezer\\.com)/.+/playlist/.+");
     private static final Pattern HTTP_PATTERN = Pattern.compile("https?://.+\\.(mp3|m4a|ogg|flac|wav)");
 
     public enum SourceType {
         SPOTIFY("Spotify"),
         YOUTUBE("YouTube"),
         SOUNDCLOUD("SoundCloud"),
-        BANDCAMP("Bandcamp"),
-        TWITCH("Twitch"),
         APPLE_MUSIC("Apple Music"),
         DEEZER("Deezer"),
         HTTP("Direct URL"),
@@ -52,12 +50,6 @@ public class SourceDetector {
         if (SOUNDCLOUD_PATTERN.matcher(input).matches()) {
             return SourceType.SOUNDCLOUD;
         }
-        if (BANDCAMP_PATTERN.matcher(input).matches()) {
-            return SourceType.BANDCAMP;
-        }
-        if (TWITCH_PATTERN.matcher(input).matches()) {
-            return SourceType.TWITCH;
-        }
         if (APPLE_MUSIC_PATTERN.matcher(input).matches()) {
             return SourceType.APPLE_MUSIC;
         }
@@ -81,5 +73,39 @@ public class SourceDetector {
 
     public static String toSoundCloudSearch(String query) {
         return "scsearch:" + query;
+    }
+
+    public static String getYouTubeThumbnail(String url) {
+        if (url == null) return null;
+
+        String videoId = null;
+
+        Pattern watchPattern = Pattern.compile("(?:youtube\\.com/watch\\?v=)([a-zA-Z0-9_-]{11})");
+        java.util.regex.Matcher matcher = watchPattern.matcher(url);
+        if (matcher.find()) {
+            videoId = matcher.group(1);
+        }
+
+        if (videoId == null) {
+            Pattern shortPattern = Pattern.compile("(?:youtu\\.be/)([a-zA-Z0-9_-]{11})");
+            matcher = shortPattern.matcher(url);
+            if (matcher.find()) {
+                videoId = matcher.group(1);
+            }
+        }
+
+        if (videoId == null) {
+            Pattern embedPattern = Pattern.compile("(?:youtube\\.com/embed/)([a-zA-Z0-9_-]{11})");
+            matcher = embedPattern.matcher(url);
+            if (matcher.find()) {
+                videoId = matcher.group(1);
+            }
+        }
+
+        if (videoId != null) {
+            return "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg";
+        }
+
+        return null;
     }
 }

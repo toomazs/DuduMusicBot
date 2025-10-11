@@ -21,7 +21,7 @@ public class SkipCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Skip the current track";
+        return "Pula a música que está tocando";
     }
 
     @Override

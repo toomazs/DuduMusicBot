@@ -37,11 +37,11 @@ public class ButtonListener extends ListenerAdapter {
                 case "prev" -> handlePreviousPage(event, parts);
                 case "next" -> handleNextPage(event, parts);
                 case "clear" -> handleClearQueue(event);
-                default -> logger.warn("Acao de botao desconhecida: {}", action);
+                default -> logger.warn("Ação de botão desconhecida: {}", action);
             }
         } catch (Exception e) {
-            logger.error("Erro ao processar interacao de botao: {}", buttonId, e);
-            event.reply("Ocorreu um erro ao processar sua solicitacao")
+            logger.error("Erro ao processar interação de botão: {}", buttonId, e);
+            event.reply("Ocorreu um erro ao processar sua solicitação. Tente novamente")
                     .setEphemeral(true)
                     .queue();
         }
@@ -56,7 +56,7 @@ public class ButtonListener extends ListenerAdapter {
         int newPage = currentPage - 1;
 
         if (newPage < 0) {
-            event.reply("Ja esta na primeira pagina!")
+            event.reply("Já está na primeira página!")
                     .setEphemeral(true)
                     .queue();
             return;
@@ -80,7 +80,7 @@ public class ButtonListener extends ListenerAdapter {
         int totalPages = (int) Math.ceil((double) queue.size() / TRACKS_PER_PAGE);
 
         if (newPage >= totalPages) {
-            event.reply("Ja esta na ultima pagina!")
+            event.reply("Já está na última página!")
                     .setEphemeral(true)
                     .queue();
             return;
@@ -106,12 +106,11 @@ public class ButtonListener extends ListenerAdapter {
                 .withDisabled(page >= totalPages - 1);
         Button clearButton = Button.danger("queue:clear", "Limpar fila");
 
-        // Update message
         event.editMessageEmbeds(embed)
                 .setActionRow(prevButton, nextButton, clearButton)
                 .queue();
 
-        logger.info("Pagina da fila atualizada para {} no servidor: {}", page, guildId);
+        logger.info("Página da fila atualizada para {} no servidor: {}", page, guildId);
     }
 
     private void handleClearQueue(ButtonInteractionEvent event) {
@@ -119,7 +118,7 @@ public class ButtonListener extends ListenerAdapter {
         MusicManager musicManager = MusicManager.getManager(guildId);
 
         if (musicManager.getScheduler().getQueue().isEmpty()) {
-            event.reply("A fila ja esta vazia!")
+            event.reply("A fila já está vazia!")
                     .setEphemeral(true)
                     .queue();
             return;
@@ -129,9 +128,9 @@ public class ButtonListener extends ListenerAdapter {
         musicManager.getScheduler().clearQueue();
 
         event.editMessageEmbeds(
-                EmbedFactory.success("Fila limpa", "Removidas " + size + " musicas da fila")
+                EmbedFactory.success("Fila limpa", "Removidas " + size + " músicas da fila")
         ).setComponents().queue();
 
-        logger.info("Fila limpa via botao no servidor: {} ({} musicas)", guildId, size);
+        logger.info("Fila limpa via botão no servidor: {} ({} músicas)", guildId, size);
     }
 }

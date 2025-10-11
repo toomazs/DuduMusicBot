@@ -26,7 +26,7 @@ public class NowPlayingCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Mostrar a musica que esta tocando";
+        return "Mostra a música que está tocando";
     }
 
     @Override
@@ -43,7 +43,7 @@ public class NowPlayingCommand implements Command {
 
         if (track == null) {
             event.replyEmbeds(
-                    EmbedFactory.error("Nada tocando", "Nao ha nenhuma musica tocando no momento")
+                    EmbedFactory.error("Nada tocando", "Não há nenhuma música tocando no momento")
             ).queue();
             return;
         }
@@ -61,7 +61,7 @@ public class NowPlayingCommand implements Command {
                 .setTitle("Tocando agora")
                 .setDescription(String.format("**[%s](%s)**", info.title, info.uri))
                 .addField("Artista", info.author, true)
-                .addField("Duracao", TimeFormat.format(duration), true)
+                .addField("Duração", TimeFormat.format(duration), true)
                 .addField("Volume", musicManager.getPlayer().getVolume() + "%", true);
 
         if (track.getInfo().isStream) {
@@ -82,7 +82,7 @@ public class NowPlayingCommand implements Command {
             case QUEUE -> "Fila";
             case OFF -> "Desligado";
         };
-        builder.addField("Modo de repeticao", loopText, true);
+        builder.addField("Modo de repetição", loopText, true);
 
         if (musicManager.getPlayer().isPaused()) {
             builder.addField("Status", "Pausado", true);
@@ -91,7 +91,7 @@ public class NowPlayingCommand implements Command {
         }
 
         int queueSize = musicManager.getScheduler().getQueue().size();
-        builder.addField("Musicas na fila", String.valueOf(queueSize), true);
+        builder.addField("Músicas na fila", String.valueOf(queueSize), true);
 
         event.replyEmbeds(builder.build()).queue();
 

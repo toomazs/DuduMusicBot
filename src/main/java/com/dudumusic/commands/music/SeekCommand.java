@@ -22,7 +22,7 @@ public class SeekCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Pular para uma posicao especifica na musica (em segundos)";
+        return "Pula para uma posição específica na música (em segundos)";
     }
 
     @Override
@@ -42,14 +42,14 @@ public class SeekCommand implements Command {
 
         if (track == null) {
             event.replyEmbeds(
-                    EmbedFactory.error("Nada tocando", "Nao ha nenhuma musica tocando no momento")
+                    EmbedFactory.error("Nada tocando", "Não há nenhuma música tocando no momento")
             ).queue();
             return;
         }
 
         if (!track.isSeekable()) {
             event.replyEmbeds(
-                    EmbedFactory.error("Nao e possivel pular", "Esta musica nao permite pular posicoes (ex: transmissoes ao vivo)")
+                    EmbedFactory.error("Não é possível pular", "Esta música não permite pular posições (ex: Transmissão Ao Vivo)")
             ).queue();
             return;
         }
@@ -59,8 +59,8 @@ public class SeekCommand implements Command {
 
         if (positionMs > track.getDuration()) {
             event.replyEmbeds(
-                    EmbedFactory.error("Posicao invalida",
-                            String.format("Posicao excede a duracao da musica (%s)",
+                    EmbedFactory.error("Posição inválida",
+                            String.format("Posição excede a duração da música (%s)",
                                     TimeFormat.format(track.getDuration())))
             ).queue();
             return;
@@ -69,10 +69,10 @@ public class SeekCommand implements Command {
         track.setPosition(positionMs);
 
         event.replyEmbeds(
-                EmbedFactory.success("Posicao alterada",
+                EmbedFactory.success("Posição alterada",
                         String.format("Pulou para **%s**", TimeFormat.format(positionMs)))
         ).queue();
 
-        logger.info("Posicao alterada para {} no servidor: {}", TimeFormat.format(positionMs), guildId);
+        logger.info("Posição alterada para {} no servidor: {}", TimeFormat.format(positionMs), guildId);
     }
 }

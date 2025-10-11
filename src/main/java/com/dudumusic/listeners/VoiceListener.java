@@ -31,7 +31,7 @@ public class VoiceListener extends ListenerAdapter {
                 .toList();
 
         if (members.isEmpty()) {
-            logger.info("Bot esta sozinho no canal de voz '{}' no servidor '{}', parando reproducao",
+            logger.info("Bot está sozinho no canal de voz '{}' no servidor '{}', parando reprodução automaticamente",
                     botChannel.getName(), guild.getName());
 
             MusicManager musicManager = MusicManager.getManager(guild.getIdLong());
