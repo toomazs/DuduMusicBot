@@ -59,8 +59,8 @@ public class QueueCommand implements Command {
         if (totalPages > 1) {
             event.replyEmbeds(embed)
                     .addActionRow(
-                            Button.secondary("queue:prev:0", "Anterior").asDisabled(),
-                            Button.secondary("queue:next:1", "Próximo"),
+                            Button.secondary("queue:prev:0", "<<").asDisabled(),
+                            Button.secondary("queue:next:1", ">>"),
                             Button.danger("queue:clear", "Limpar fila")
                     )
                     .queue();
@@ -77,7 +77,7 @@ public class QueueCommand implements Command {
 
     public static MessageEmbed createQueueEmbed(AudioTrack currentTrack, BlockingQueue<AudioTrack> queue, int page) {
         EmbedBuilder builder = EmbedFactory.musicBuilder()
-                .setTitle("Fila de musicas");
+                .setTitle("Fila de Músicas");
 
         if (currentTrack != null) {
             var info = currentTrack.getInfo();

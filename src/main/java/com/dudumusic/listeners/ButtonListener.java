@@ -100,9 +100,9 @@ public class ButtonListener extends ListenerAdapter {
 
         int totalPages = (int) Math.ceil((double) queue.size() / TRACKS_PER_PAGE);
 
-        Button prevButton = Button.secondary("queue:prev:" + page, "Anterior")
+        Button prevButton = Button.secondary("queue:prev:" + page, "<<")
                 .withDisabled(page == 0);
-        Button nextButton = Button.secondary("queue:next:" + page, "Proximo")
+        Button nextButton = Button.secondary("queue:next:" + page, ">>")
                 .withDisabled(page >= totalPages - 1);
         Button clearButton = Button.danger("queue:clear", "Limpar fila");
 

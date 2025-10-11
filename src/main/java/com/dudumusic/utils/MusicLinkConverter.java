@@ -12,6 +12,10 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.jsoup.Jsoup;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MusicLinkConverter {
     private static final Logger logger = LoggerFactory.getLogger(MusicLinkConverter.class);
@@ -383,6 +387,67 @@ public class MusicLinkConverter {
     private static PlaylistResult convertDeezerPlaylist(String url) {
         HttpURLConnection connection = null;
         try {
+            Pattern idPattern = Pattern.compile("playlist/(\\d+)");
+            java.util.regex.Matcher idMatcher = idPattern.matcher(url);
+            String playlistId = null;
+            if (idMatcher.find()) playlistId = idMatcher.group(1);
+
+            if (playlistId != null) {
+                String apiUrl = "https://api.deezer.com/playlist/" + playlistId;
+                URL api = new URL(apiUrl);
+                HttpURLConnection apiConn = (HttpURLConnection) api.openConnection();
+                apiConn.setRequestMethod("GET");
+                apiConn.setRequestProperty("User-Agent", "Mozilla/5.0");
+                apiConn.setConnectTimeout(10000);
+                apiConn.setReadTimeout(10000);
+
+                int code = apiConn.getResponseCode();
+                if (code == HttpURLConnection.HTTP_OK) {
+                    BufferedReader rd = new BufferedReader(new InputStreamReader(apiConn.getInputStream(), StandardCharsets.UTF_8));
+                    StringBuilder sb = new StringBuilder();
+                    String l;
+                    while ((l = rd.readLine()) != null) {
+                        sb.append(l).append('\n');
+                    }
+                    rd.close();
+                    try {
+                        JSONObject root = new JSONObject(sb.toString());
+                        String playlistName = root.optString("title", null);
+                        String artworkUrl = root.optString("picture_xl", null);
+
+                        java.util.List<String> queries = new java.util.ArrayList<>();
+                        if (root.has("tracks")) {
+                            JSONObject tracksObj = root.optJSONObject("tracks");
+                            if (tracksObj != null && tracksObj.has("data")) {
+                                JSONArray arr = tracksObj.optJSONArray("data");
+                                if (arr != null) {
+                                    for (int i = 0; i < arr.length(); i++) {
+                                        JSONObject t = arr.optJSONObject(i);
+                                        if (t == null) continue;
+                                        String title = t.optString("title", null);
+                                        String artist = null;
+                                        JSONObject artistObj = t.optJSONObject("artist");
+                                        if (artistObj != null) artist = artistObj.optString("name", null);
+                                        if (title != null) {
+                                            title = Jsoup.parse(title).text();
+                                            if (artist != null) artist = Jsoup.parse(artist).text();
+                                            queries.add("ytsearch:" + (artist != null ? artist + " " + title : title));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!queries.isEmpty()) {
+                            logger.info("Playlist Deezer extraída via API: {} ({} músicas)", playlistName, queries.size());
+                            return new PlaylistResult(playlistName, artworkUrl, queries);
+                        }
+                    } catch (Exception je) {
+                        logger.debug("Deezer API parse falhou, fallback para HTML", je);
+                    }
+                }
+            }
+
             URL urlObj = new URL(url);
             connection = (HttpURLConnection) urlObj.openConnection();
             connection.setRequestMethod("GET");
@@ -410,17 +475,20 @@ public class MusicLinkConverter {
                 String playlistName = extractMetaTag(html, "og:title");
                 if (playlistName != null) {
                     playlistName = playlistName.replaceAll(" - Deezer$", "").trim();
+                    try { playlistName = java.net.URLDecoder.decode(playlistName, StandardCharsets.UTF_8.name()); } catch (Exception ignore) {}
+                    playlistName = Jsoup.parse(playlistName).text();
                 }
 
                 String artworkUrl = extractMetaTag(html, "og:image");
 
                 java.util.List<String> searchQueries = new java.util.ArrayList<>();
-                Pattern trackPattern = Pattern.compile("\"SNG_TITLE\"\\s*:\\s*\"([^\"]+)\"[^}]*\"ART_NAME\"\\s*:\\s*\"([^\"]+)\"");
+                Pattern trackPattern = Pattern.compile("\"SNG_TITLE\"\\s*:\\s*\"([^\"]+)\"[\\s\\S]*?\"ART_NAME\"\\s*:\\s*\"([^\"]+)\"", Pattern.DOTALL);
                 Matcher matcher = trackPattern.matcher(html);
 
                 while (matcher.find()) {
                     String title = matcher.group(1);
                     String artist = matcher.group(2);
+                    try { title = Jsoup.parse(title).text(); artist = Jsoup.parse(artist).text(); } catch (Exception ignore) {}
                     searchQueries.add("ytsearch:" + artist + " " + title);
                 }
 
@@ -474,44 +542,127 @@ public class MusicLinkConverter {
                 Matcher jsonMatcher = jsonLdPattern.matcher(html);
 
                 while (jsonMatcher.find()) {
-                    String jsonLd = jsonMatcher.group(1);
+                    String jsonLd = jsonMatcher.group(1).trim();
 
-                    if (jsonLd.contains("\"@type\"") && jsonLd.contains("MusicPlaylist")) {
-                        Pattern namePattern = Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"");
-                        Matcher nameMatcher = namePattern.matcher(jsonLd);
-                        if (nameMatcher.find()) {
-                            playlistName = nameMatcher.group(1);
+                    if (!jsonLd.contains("MusicPlaylist")) continue;
+
+                    try {
+                        Object parsed = null;
+                        jsonLd = jsonLd.replaceAll("^<!--\\s*", "").replaceAll("\\s*-->", "");
+                        if (jsonLd.startsWith("{")) {
+                            JSONObject obj = new JSONObject(jsonLd);
+                            parsed = obj;
+                        } else if (jsonLd.startsWith("[")) {
+                            JSONArray arr = new JSONArray(jsonLd);
+                            if (arr.length() > 0) parsed = arr.get(0);
                         }
 
-                        Pattern imagePattern = Pattern.compile("\"image\"\\s*:\\s*\"([^\"]+)\"");
-                        Matcher imageMatcher = imagePattern.matcher(jsonLd);
-                        if (imageMatcher.find()) {
-                            artworkUrl = imageMatcher.group(1);
-                            artworkUrl = artworkUrl.replaceAll("/(\\d+)x\\d+.*", "/1200x1200bb.jpg");
-                        }
+                        if (parsed instanceof JSONObject) {
+                            JSONObject obj = (JSONObject) parsed;
 
-                        Pattern trackArrayPattern = Pattern.compile("\"track\"\\s*:\\s*\\[([^\\]]+)\\]");
-                        Matcher trackArrayMatcher = trackArrayPattern.matcher(jsonLd);
-                        if (trackArrayMatcher.find()) {
-                            String tracksJson = trackArrayMatcher.group(1);
+                            if (obj.has("@type") && (obj.optString("@type").contains("MusicPlaylist") || obj.optString("@type").contains("Playlist"))) {
+                                if (obj.has("name")) {
+                                    playlistName = obj.optString("name");
+                                    playlistName = Jsoup.parse(playlistName).text();
+                                }
 
-                            Pattern trackInfoPattern = Pattern.compile("\\{[^}]*\"name\"\\s*:\\s*\"([^\"]+)\"[^}]*\"byArtist\"[^}]*\"name\"\\s*:\\s*\"([^\"]+)\"");
-                            Matcher trackMatcher = trackInfoPattern.matcher(tracksJson);
+                                if (obj.has("image")) {
+                                    artworkUrl = obj.optString("image");
+                                    artworkUrl = artworkUrl.replaceAll("/(\\d+)x\\d+.*", "/1200x1200bb.jpg");
+                                }
 
-                            while (trackMatcher.find()) {
-                                String songName = trackMatcher.group(1);
-                                String artist = trackMatcher.group(2);
-                                searchQueries.add("ytsearch:" + artist + " " + songName);
+                                if (obj.has("track")) {
+                                    Object trackObj = obj.get("track");
+                                    if (trackObj instanceof JSONArray) {
+                                        JSONArray tracks = (JSONArray) trackObj;
+                                        for (int t = 0; t < tracks.length(); t++) {
+                                            try {
+                                                Object entry = tracks.get(t);
+                                                if (entry instanceof JSONObject) {
+                                                    JSONObject trackJson = (JSONObject) entry;
+                                                    String songName = trackJson.optString("name", null);
+                                                    String artist = null;
+                                                    if (trackJson.has("byArtist")) {
+                                                        Object byArtist = trackJson.get("byArtist");
+                                                        if (byArtist instanceof JSONObject) {
+                                                            artist = ((JSONObject) byArtist).optString("name", null);
+                                                        } else if (byArtist instanceof JSONArray) {
+                                                            JSONArray ba = (JSONArray) byArtist;
+                                                            StringBuilder sb = new StringBuilder();
+                                                            for (int bi = 0; bi < ba.length(); bi++) {
+                                                                Object baEntry = ba.get(bi);
+                                                                if (baEntry instanceof JSONObject) {
+                                                                    if (sb.length() > 0) sb.append(" & ");
+                                                                    sb.append(((JSONObject) baEntry).optString("name", ""));
+                                                                }
+                                                            }
+                                                            if (sb.length() > 0) artist = sb.toString();
+                                                        }
+                                                    }
+
+                                                    if (songName != null) {
+                                                        songName = Jsoup.parse(songName).text();
+                                                        if (artist != null) artist = Jsoup.parse(artist).text();
+                                                        searchQueries.add("ytsearch:" + (artist != null ? artist + " " + songName : songName));
+                                                    }
+                                                }
+                                            } catch (Exception ignore) {
+                                            }
+                                        }
+                                    }
+                                }
+
+                                break;
                             }
                         }
-
-                        break;
+                    } catch (JSONException je) {
+                        logger.debug("Falha ao parsear JSON-LD da Apple Music, tentando próxima ocorrência", je);
                     }
                 }
 
                 if (!searchQueries.isEmpty()) {
                     logger.info("Playlist Apple Music extraída: {} ({} músicas)", playlistName, searchQueries.size());
                     return new PlaylistResult(playlistName, artworkUrl, searchQueries);
+                }
+                try {
+                    org.jsoup.nodes.Document doc = Jsoup.parse(html);
+                    if (playlistName == null) {
+                        String title = null;
+                        org.jsoup.nodes.Element h1 = doc.selectFirst("h1.t-page-title, h1.product-hero__title");
+                        if (h1 != null) title = h1.text();
+                        if (title == null) title = extractMetaTag(html, "og:title");
+                        if (title != null) playlistName = Jsoup.parse(title).text();
+                    }
+
+                    if (artworkUrl == null) {
+                        org.jsoup.nodes.Element img = doc.selectFirst("meta[property=og:image], img.product-hero__artwork, img.playlist-cover-art");
+                        if (img != null) {
+                            String src = img.hasAttr("content") ? img.attr("content") : img.attr("src");
+                            if (src != null) artworkUrl = src.replaceAll("/(\\d+)x\\d+.*", "/1200x1200bb.jpg");
+                        }
+                    }
+
+                    // Apple Music often has track lists in li elements with data-test attributes
+                    java.util.List<org.jsoup.nodes.Element> items = doc.select("li[data-test=track], li.track, div.songs-list-row");
+                    if (items != null && !items.isEmpty()) {
+                        for (org.jsoup.nodes.Element it : items) {
+                            try {
+                                String t = it.selectFirst(".songs-list-row__song-name, .track-name, .song-title, .songs-list-row__song-title") != null ? it.selectFirst(".songs-list-row__song-name, .track-name, .song-title, .songs-list-row__song-title").text() : null;
+                                String a = it.selectFirst(".songs-list-row__by-line, .artist-name, .songs-list-row__artist-name") != null ? it.selectFirst(".songs-list-row__by-line, .artist-name, .songs-list-row__artist-name").text() : null;
+                                if (t == null) continue;
+                                t = Jsoup.parse(t).text();
+                                if (a != null) a = Jsoup.parse(a).text();
+                                searchQueries.add("ytsearch:" + (a != null ? a + " " + t : t));
+                            } catch (Exception ignore) {}
+                        }
+                    }
+
+                    if (!searchQueries.isEmpty()) {
+                        logger.info("Playlist Apple Music extraída via DOM: {} ({} músicas)", playlistName, searchQueries.size());
+                        return new PlaylistResult(playlistName, artworkUrl, searchQueries);
+                    }
+                } catch (Exception e) {
+                    logger.debug("Fallback DOM parsing falhou para Apple Music", e);
                 }
             }
         } catch (Exception e) {

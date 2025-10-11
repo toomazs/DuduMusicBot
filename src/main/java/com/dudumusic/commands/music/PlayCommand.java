@@ -70,20 +70,6 @@ public class PlayCommand implements Command {
         logger.info("Requisição de reprodução - Fonte: {}, Query: {}", sourceType.getDisplayName(), query);
 
         String customArtworkUrl = null;
-        if (MusicLinkConverter.needsConversion(sourceType)) {
-            String convertedQuery = MusicLinkConverter.convertToYouTubeSearch(query, sourceType);
-            if (convertedQuery != null) {
-                logger.info("Link {} convertido para busca no YouTube: {}", sourceType.getDisplayName(), convertedQuery);
-                query = convertedQuery;
-                customArtworkUrl = MusicLinkConverter.getArtworkUrl(convertedQuery);
-            } else {
-                logger.warn("Não foi possível converter link {}, usando como busca de texto", sourceType.getDisplayName());
-                query = SourceDetector.toYoutubeSearch(query);
-            }
-        } else if (sourceType == SourceDetector.SourceType.SEARCH) {
-            query = SourceDetector.toYoutubeSearch(query);
-        }
-
         long guildId = event.getGuild().getIdLong();
         MusicManager musicManager = MusicManager.getManager(guildId);
 
@@ -97,6 +83,107 @@ public class PlayCommand implements Command {
             audioManager.openAudioConnection(voiceChannel);
             audioManager.setSendingHandler(musicManager.getAudioHandler());
             logger.info("Conectado ao canal de voz: {}", voiceChannel.getName());
+        }
+        if (sourceType == SourceDetector.SourceType.DEEZER_PLAYLIST || sourceType == SourceDetector.SourceType.APPLE_MUSIC_PLAYLIST) {
+            var playlistResult = MusicLinkConverter.convertPlaylistToYouTubeSearches(query, sourceType == SourceDetector.SourceType.DEEZER_PLAYLIST ? SourceDetector.SourceType.DEEZER : SourceDetector.SourceType.APPLE_MUSIC);
+            if (playlistResult != null && !playlistResult.searchQueries.isEmpty()) {
+                int limit = Math.min(playlistResult.searchQueries.size(), 200);
+                final int[] added = {0};
+                final MusicManager mgr = musicManager;
+
+                java.util.concurrent.atomic.AtomicInteger idx = new java.util.concurrent.atomic.AtomicInteger(0);
+                java.util.concurrent.atomic.AtomicInteger inFlight = new java.util.concurrent.atomic.AtomicInteger(0);
+                java.util.concurrent.atomic.AtomicReference<java.util.function.Consumer<Void>> loaderRef = new java.util.concurrent.atomic.AtomicReference<>();
+
+                Runnable checkFinish = () -> {
+                    if (idx.get() >= limit && inFlight.get() == 0) {
+                        var embedBuilder = EmbedFactory.withRequester(event.getUser())
+                                .setTitle("Playlist adicionada")
+                                .setDescription(String.format("**%s**", playlistResult.playlistName != null ? playlistResult.playlistName : "Playlist"))
+                                .addField("Músicas adicionadas", String.valueOf(added[0]), true);
+
+                        if (playlistResult.artworkUrl != null) {
+                            embedBuilder.setThumbnail(playlistResult.artworkUrl);
+                        }
+
+                        event.getHook().editOriginalEmbeds(embedBuilder.build()).queue();
+                    }
+                };
+
+                var initialEmbed = EmbedFactory.withRequester(event.getUser())
+                        .setTitle("Adicionando playlist...")
+                        .setDescription(String.format("**%s**", playlistResult.playlistName != null ? playlistResult.playlistName : "Playlist"))
+                        .addField("Músicas totais", String.valueOf(playlistResult.searchQueries.size()), true);
+                if (playlistResult.artworkUrl != null) initialEmbed.setThumbnail(playlistResult.artworkUrl);
+                event.getHook().editOriginalEmbeds(initialEmbed.build()).queue();
+
+                loaderRef.set((v) -> {
+                    int i = idx.getAndIncrement();
+                    if (i >= limit) {
+                        checkFinish.run();
+                        return;
+                    }
+                    String toLoad = playlistResult.searchQueries.get(i);
+                    inFlight.incrementAndGet();
+
+                    PlayerConfig.getInstance().loadItemOrdered(mgr, toLoad, new com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler() {
+                        @Override
+                        public void trackLoaded(AudioTrack track) {
+                            mgr.getScheduler().queue(track);
+                            added[0]++;
+                            inFlight.decrementAndGet();
+                            loaderRef.get().accept(null);
+                            checkFinish.run();
+                        }
+
+                        @Override
+                        public void playlistLoaded(AudioPlaylist playlist) {
+                            if (!playlist.getTracks().isEmpty()) {
+                                mgr.getScheduler().queue(playlist.getTracks().get(0));
+                                added[0]++;
+                            }
+                            inFlight.decrementAndGet();
+                            loaderRef.get().accept(null);
+                            checkFinish.run();
+                        }
+
+                        @Override
+                        public void noMatches() {
+                            inFlight.decrementAndGet();
+                            loaderRef.get().accept(null);
+                            checkFinish.run();
+                        }
+
+                        @Override
+                        public void loadFailed(com.sedmelluq.discord.lavaplayer.tools.FriendlyException exception) {
+                            logger.warn("Falha ao carregar item da playlist convertida: {}", toLoad, exception);
+                            inFlight.decrementAndGet();
+                            loaderRef.get().accept(null);
+                            checkFinish.run();
+                        }
+                    });
+                });
+
+                loaderRef.get().accept(null);
+                return;
+            } else {
+                event.getHook().editOriginalEmbeds(
+                        EmbedFactory.error("Não foi possível processar playlist", "Não consegui extrair músicas dessa playlist")
+                ).queue();
+                return;
+            }
+        } else if (MusicLinkConverter.needsConversion(sourceType)) {
+            String convertedQuery = MusicLinkConverter.convertToYouTubeSearch(query, sourceType);
+            if (convertedQuery != null) {
+                logger.info("Link {} convertido para busca no YouTube: {}", sourceType.getDisplayName(), convertedQuery);
+                query = convertedQuery;
+                customArtworkUrl = MusicLinkConverter.getArtworkUrl(convertedQuery);
+            } else {
+                logger.warn("Não foi possível converter link {}, usando como busca de texto", sourceType.getDisplayName());
+                query = SourceDetector.toYoutubeSearch(query);
+            }
+        } else if (sourceType == SourceDetector.SourceType.SEARCH) {
+            query = SourceDetector.toYoutubeSearch(query);
         }
 
         final String trackUrl = query;

@@ -34,7 +34,6 @@
     </repositories>
 
     <dependencies>
-        <!-- Discord API -->
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
@@ -47,7 +46,6 @@
             </exclusions>
         </dependency>
 
-        <!-- Lavaplayer -->
         <dependency>
             <groupId>dev.arbjerg</groupId>
             <artifactId>lavaplayer</artifactId>
@@ -64,7 +62,6 @@
             </exclusions>
         </dependency>
 
-        <!-- YouTube source -->
         <dependency>
             <groupId>dev.lavalink.youtube</groupId>
             <artifactId>youtube-plugin</artifactId>
@@ -81,7 +78,6 @@
             </exclusions>
         </dependency>
 
-        <!-- Spotify/Apple/Deezer sources -->
         <dependency>
             <groupId>com.github.topi314.lavasrc</groupId>
             <artifactId>lavasrc</artifactId>
@@ -98,28 +94,24 @@
             </exclusions>
         </dependency>
 
-        <!-- Lyrics support -->
         <dependency>
             <groupId>com.github.topi314.lavalyrics</groupId>
             <artifactId>lavalyrics</artifactId>
             <version>1.1.0</version>
         </dependency>
 
-        <!-- Logging -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.5.19</version>
         </dependency>
 
-        <!-- Environment config -->
         <dependency>
             <groupId>io.github.cdimascio</groupId>
             <artifactId>dotenv-java</artifactId>
             <version>3.2.0</version>
         </dependency>
 
-        <!-- Security fixes for transitive dependencies -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -131,11 +123,22 @@
             <artifactId>commons-codec</artifactId>
             <version>1.17.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.16.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20240303</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- Maven Shade Plugin  -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>

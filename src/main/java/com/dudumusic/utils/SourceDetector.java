@@ -17,7 +17,9 @@ public class SourceDetector {
         SPOTIFY("Spotify"),
         YOUTUBE("YouTube"),
         SOUNDCLOUD("SoundCloud"),
+        APPLE_MUSIC_PLAYLIST("Apple Music Playlist"),
         APPLE_MUSIC("Apple Music"),
+        DEEZER_PLAYLIST("Deezer Playlist"),
         DEEZER("Deezer"),
         HTTP("Direct URL"),
         SEARCH("Search Query"),
@@ -50,8 +52,14 @@ public class SourceDetector {
         if (SOUNDCLOUD_PATTERN.matcher(input).matches()) {
             return SourceType.SOUNDCLOUD;
         }
+        if (APPLE_MUSIC_PLAYLIST_PATTERN.matcher(input).matches()) {
+            return SourceType.APPLE_MUSIC_PLAYLIST;
+        }
         if (APPLE_MUSIC_PATTERN.matcher(input).matches()) {
             return SourceType.APPLE_MUSIC;
+        }
+        if (DEEZER_PLAYLIST_PATTERN.matcher(input).matches()) {
+            return SourceType.DEEZER_PLAYLIST;
         }
         if (DEEZER_PATTERN.matcher(input).matches()) {
             return SourceType.DEEZER;
