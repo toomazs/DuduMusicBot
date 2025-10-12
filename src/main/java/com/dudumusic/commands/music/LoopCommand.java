@@ -3,6 +3,7 @@ package com.dudumusic.commands.music;
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.audio.TrackScheduler;
 import com.dudumusic.commands.Command;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -50,19 +51,22 @@ public class LoopCommand implements Command {
         musicManager.getScheduler().setLoopMode(mode);
 
         String modeText = switch (mode) {
-            case TRACK -> "Musica";
-            case QUEUE -> "Fila";
-            case OFF -> "Desligado";
+            case TRACK -> Translation.t(guildId, "loop_mode_track");
+            case QUEUE -> Translation.t(guildId, "loop_mode_queue");
+            case OFF -> Translation.t(guildId, "loop_mode_off");
         };
 
         String description = switch (mode) {
-            case TRACK -> "A música atual será repetida";
-            case QUEUE -> "A fila será repetida";
-            case OFF -> "Repetição desativada";
+            case TRACK -> Translation.t(guildId, "loop_desc_track");
+            case QUEUE -> Translation.t(guildId, "loop_desc_queue");
+            case OFF -> Translation.t(guildId, "loop_desc_off");
         };
 
         event.replyEmbeds(
-                EmbedFactory.success("Modo de repetição: " + modeText, description)
+                EmbedFactory.success(
+                        Translation.t(guildId, "loop_title", modeText),
+                        description
+                )
         ).queue();
 
         logger.info("Modo de repetição definido para {} no servidor: {}", mode, guildId);

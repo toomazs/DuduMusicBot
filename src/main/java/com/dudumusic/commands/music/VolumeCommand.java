@@ -2,7 +2,9 @@ package com.dudumusic.commands.music;
 
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.Command;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
+import com.dudumusic.utils.ProgressBar;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -41,26 +43,15 @@ public class VolumeCommand implements Command {
         int volume = event.getOption("level").getAsInt();
         musicManager.getPlayer().setVolume(volume);
 
-        String volumeBar = createVolumeBar(volume);
+        String volumeBar = ProgressBar.createVolumeBar(volume);
 
         event.replyEmbeds(
-                EmbedFactory.success("Volume ajustado",
-                        String.format("Volume definido para **%d%%**\n%s", volume, volumeBar))
+                EmbedFactory.success(
+                        Translation.t(guildId, "volume_title"),
+                        Translation.t(guildId, "volume_desc", volume, volumeBar)
+                )
         ).queue();
 
         logger.info("Volume definido para {} no servidor: {}", volume, guildId);
-    }
-
-    private String createVolumeBar(int volume) {
-        int bars = volume * 20 / 150;
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 20; i++) {
-            if (i < bars) {
-                sb.append("▰");
-            } else {
-                sb.append("▱");
-            }
-        }
-        return sb.toString();
     }
 }

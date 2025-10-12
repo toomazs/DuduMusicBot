@@ -2,6 +2,7 @@ package com.dudumusic.commands.info;
 
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.Command;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import com.dudumusic.utils.ProgressBar;
 import com.dudumusic.utils.TimeFormat;
@@ -43,7 +44,10 @@ public class NowPlayingCommand implements Command {
 
         if (track == null) {
             event.replyEmbeds(
-                    EmbedFactory.error("Nada tocando", "Não há nenhuma música tocando no momento")
+                    EmbedFactory.error(
+                            Translation.t(guildId, "nowplaying_nothing_title"),
+                            Translation.t(guildId, "nowplaying_nothing_desc")
+                    )
             ).queue();
             return;
         }
@@ -57,17 +61,19 @@ public class NowPlayingCommand implements Command {
                 TimeFormat.format(position),
                 TimeFormat.format(duration));
 
-        EmbedBuilder builder = EmbedFactory.withRequester(event.getUser())
-                .setTitle("Tocando agora")
+        EmbedBuilder builder = EmbedFactory.withRequester(event.getUser(), guildId)
+                .setTitle(Translation.t(guildId, "nowplaying_title"))
                 .setDescription(String.format("**[%s](%s)**", info.title, info.uri))
-                .addField("Artista", info.author, true)
-                .addField("Duração", TimeFormat.format(duration), true)
-                .addField("Volume", musicManager.getPlayer().getVolume() + "%", true);
+                .addField(Translation.t(guildId, "nowplaying_artist"), info.author, true)
+                .addField(Translation.t(guildId, "nowplaying_duration"), TimeFormat.format(duration), true)
+                .addField(Translation.t(guildId, "nowplaying_volume"), musicManager.getPlayer().getVolume() + "%", true);
 
         if (track.getInfo().isStream) {
-            builder.addField("Progresso", "TRANSMISSAO AO VIVO", false);
+            builder.addField(Translation.t(guildId, "nowplaying_progress"),
+                    Translation.t(guildId, "nowplaying_live"),
+                    false);
         } else {
-            builder.addField("Progresso",
+            builder.addField(Translation.t(guildId, "nowplaying_progress"),
                     progressBar + "\n" + timeDisplay,
                     false);
         }
@@ -78,20 +84,24 @@ public class NowPlayingCommand implements Command {
 
         var loopMode = musicManager.getScheduler().getLoopMode();
         String loopText = switch (loopMode) {
-            case TRACK -> "Musica";
-            case QUEUE -> "Fila";
-            case OFF -> "Desligado";
+            case TRACK -> Translation.t(guildId, "loop_mode_track");
+            case QUEUE -> Translation.t(guildId, "loop_mode_queue");
+            case OFF -> Translation.t(guildId, "loop_mode_off");
         };
-        builder.addField("Modo de repetição", loopText, true);
+        builder.addField(Translation.t(guildId, "nowplaying_loop_mode"), loopText, true);
 
         if (musicManager.getPlayer().isPaused()) {
-            builder.addField("Status", "Pausado", true);
+            builder.addField(Translation.t(guildId, "nowplaying_status"),
+                    Translation.t(guildId, "nowplaying_status_paused"),
+                    true);
         } else {
-            builder.addField("Status", "Tocando", true);
+            builder.addField(Translation.t(guildId, "nowplaying_status"),
+                    Translation.t(guildId, "nowplaying_status_playing"),
+                    true);
         }
 
         int queueSize = musicManager.getScheduler().getQueue().size();
-        builder.addField("Músicas na fila", String.valueOf(queueSize), true);
+        builder.addField(Translation.t(guildId, "nowplaying_queue_size"), String.valueOf(queueSize), true);
 
         event.replyEmbeds(builder.build()).queue();
 

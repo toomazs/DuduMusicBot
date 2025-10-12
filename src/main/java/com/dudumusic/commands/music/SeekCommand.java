@@ -2,6 +2,7 @@ package com.dudumusic.commands.music;
 
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.Command;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import com.dudumusic.utils.TimeFormat;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -42,14 +43,20 @@ public class SeekCommand implements Command {
 
         if (track == null) {
             event.replyEmbeds(
-                    EmbedFactory.error("Nada tocando", "Não há nenhuma música tocando no momento")
+                    EmbedFactory.error(
+                            Translation.t(guildId, "seek_nothing_playing"),
+                            Translation.t(guildId, "seek_no_track")
+                    )
             ).queue();
             return;
         }
 
         if (!track.isSeekable()) {
             event.replyEmbeds(
-                    EmbedFactory.error("Não é possível pular", "Esta música não permite pular posições (ex: Transmissão Ao Vivo)")
+                    EmbedFactory.error(
+                            Translation.t(guildId, "seek_not_seekable_title"),
+                            Translation.t(guildId, "seek_not_seekable_desc")
+                    )
             ).queue();
             return;
         }
@@ -59,9 +66,10 @@ public class SeekCommand implements Command {
 
         if (positionMs > track.getDuration()) {
             event.replyEmbeds(
-                    EmbedFactory.error("Posição inválida",
-                            String.format("Posição excede a duração da música (%s)",
-                                    TimeFormat.format(track.getDuration())))
+                    EmbedFactory.error(
+                            Translation.t(guildId, "seek_invalid_title"),
+                            Translation.t(guildId, "seek_invalid_desc", TimeFormat.format(track.getDuration()))
+                    )
             ).queue();
             return;
         }
@@ -69,8 +77,10 @@ public class SeekCommand implements Command {
         track.setPosition(positionMs);
 
         event.replyEmbeds(
-                EmbedFactory.success("Posição alterada",
-                        String.format("Pulou para **%s**", TimeFormat.format(positionMs)))
+                EmbedFactory.success(
+                        Translation.t(guildId, "seek_title"),
+                        Translation.t(guildId, "seek_desc", TimeFormat.format(positionMs))
+                )
         ).queue();
 
         logger.info("Posição alterada para {} no servidor: {}", TimeFormat.format(positionMs), guildId);

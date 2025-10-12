@@ -4,23 +4,23 @@ public class ProgressBar {
 
     public static String create(long current, long total, int length) {
         if (total == 0 || total == Long.MAX_VALUE) {
-            return "[" + "─".repeat(length) + "] LIVE";
+            return "▱".repeat(length) + " LIVE";
         }
 
         int progress = (int) ((double) current / total * length);
         progress = Math.min(progress, length);
 
-        StringBuilder bar = new StringBuilder("[");
+        StringBuilder bar = new StringBuilder();
 
         for (int i = 0; i < length; i++) {
             if (i < progress) {
-                bar.append("█");
+                bar.append("▰");
             } else {
-                bar.append("─");
+                bar.append("▱");
             }
         }
 
-        bar.append("] ");
+        bar.append(" ");
 
         int percentage = (int) ((double) current / total * 100);
         bar.append(percentage).append("%");
@@ -35,5 +35,18 @@ public class ProgressBar {
         String totalTime = TimeFormat.format(total);
 
         return String.format("%s\n%s / %s", bar, currentTime, totalTime);
+    }
+
+    public static String createVolumeBar(int volume) {
+        int bars = volume * 20 / 150;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 20; i++) {
+            if (i < bars) {
+                sb.append("▰");
+            } else {
+                sb.append("▱");
+            }
+        }
+        return sb.toString();
     }
 }

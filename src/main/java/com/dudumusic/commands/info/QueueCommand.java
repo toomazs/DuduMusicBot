@@ -2,6 +2,7 @@ package com.dudumusic.commands.info;
 
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.Command;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import com.dudumusic.utils.TimeFormat;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -47,12 +48,15 @@ public class QueueCommand implements Command {
 
         if (currentTrack == null && queue.isEmpty()) {
             event.replyEmbeds(
-                    EmbedFactory.info("Fila vazia", "Não há músicas na fila")
+                    EmbedFactory.info(
+                            Translation.t(guildId, "queue_empty_title"),
+                            Translation.t(guildId, "queue_empty_desc")
+                    )
             ).queue();
             return;
         }
 
-        MessageEmbed embed = createQueueEmbed(currentTrack, queue, 0);
+        MessageEmbed embed = createQueueEmbed(currentTrack, queue, 0, guildId);
 
         int totalPages = (int) Math.ceil((double) queue.size() / TRACKS_PER_PAGE);
 
@@ -61,13 +65,13 @@ public class QueueCommand implements Command {
                     .addActionRow(
                             Button.secondary("queue:prev:0", "<<").asDisabled(),
                             Button.secondary("queue:next:1", ">>"),
-                            Button.danger("queue:clear", "Limpar fila")
+                            Button.danger("queue:clear", Translation.t(guildId, "queue_btn_clear"))
                     )
                     .queue();
         } else {
             event.replyEmbeds(embed)
                     .addActionRow(
-                            Button.danger("queue:clear", "Limpar fila")
+                            Button.danger("queue:clear", Translation.t(guildId, "queue_btn_clear"))
                     )
                     .queue();
         }
@@ -75,13 +79,13 @@ public class QueueCommand implements Command {
         logger.info("Fila exibida para o servidor: {} (página 0/{} páginas)", guildId, totalPages);
     }
 
-    public static MessageEmbed createQueueEmbed(AudioTrack currentTrack, BlockingQueue<AudioTrack> queue, int page) {
+    public static MessageEmbed createQueueEmbed(AudioTrack currentTrack, BlockingQueue<AudioTrack> queue, int page, long guildId) {
         EmbedBuilder builder = EmbedFactory.musicBuilder()
-                .setTitle("Fila de Músicas");
+                .setTitle(Translation.t(guildId, "queue_title"));
 
         if (currentTrack != null) {
             var info = currentTrack.getInfo();
-            builder.addField("Tocando agora",
+            builder.addField(Translation.t(guildId, "queue_now_playing"),
                     String.format("**[%s](%s)**\n%s - `%s`",
                             info.title,
                             info.uri,
@@ -106,19 +110,19 @@ public class QueueCommand implements Command {
                         TimeFormat.format(track.getDuration())));
             }
 
-            builder.addField("Próximas músicas", queueText.toString(), false);
+            builder.addField(Translation.t(guildId, "queue_up_next"), queueText.toString(), false);
 
             long totalDuration = tracks.stream()
                     .mapToLong(AudioTrack::getDuration)
                     .sum();
 
-            builder.setFooter(String.format("Pagina %d/%d - %d músicas - Total: %s",
+            builder.setFooter(Translation.t(guildId, "queue_footer",
                     page + 1,
                     totalPages,
                     tracks.size(),
                     TimeFormat.formatVerbose(totalDuration)));
         } else {
-            builder.setDescription("Nenhuma música na fila");
+            builder.setDescription(Translation.t(guildId, "queue_no_songs"));
         }
 
         return builder.build();

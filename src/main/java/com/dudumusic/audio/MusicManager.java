@@ -25,7 +25,11 @@ public class MusicManager {
     }
 
     public static MusicManager getManager(long guildId) {
-        return managers.computeIfAbsent(guildId, id -> new MusicManager(PlayerConfig.getInstance()));
+        return managers.computeIfAbsent(guildId, id -> {
+            MusicManager manager = new MusicManager(PlayerConfig.getInstance());
+            manager.getScheduler().setGuildId(guildId);
+            return manager;
+        });
     }
 
     public static void removeManager(long guildId) {

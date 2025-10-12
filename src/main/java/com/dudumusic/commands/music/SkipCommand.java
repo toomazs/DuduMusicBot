@@ -2,6 +2,7 @@ package com.dudumusic.commands.music;
 
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.Command;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -36,7 +37,10 @@ public class SkipCommand implements Command {
 
         if (musicManager.getPlayer().getPlayingTrack() == null) {
             event.replyEmbeds(
-                    EmbedFactory.error("Nada tocando", "Não há nenhuma música tocando no momento")
+                    EmbedFactory.error(
+                            Translation.t(guildId, "skip_nothing_playing"),
+                            Translation.t(guildId, "skip_no_track")
+                    )
             ).queue();
             return;
         }
@@ -45,7 +49,10 @@ public class SkipCommand implements Command {
         musicManager.getScheduler().nextTrack();
 
         event.replyEmbeds(
-                EmbedFactory.success("Pulado", "Pulou: **" + skippedTitle + "**")
+                EmbedFactory.success(
+                        Translation.t(guildId, "skip_title"),
+                        Translation.t(guildId, "skip_desc", skippedTitle)
+                )
         ).queue();
 
         logger.info("Música pulada: {}", skippedTitle);

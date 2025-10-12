@@ -3,6 +3,7 @@ package com.dudumusic.commands.music;
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.Command;
 import com.dudumusic.core.PlayerConfig;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import com.dudumusic.utils.MusicLinkConverter;
 import com.dudumusic.utils.SourceDetector;
@@ -48,10 +49,15 @@ public class PlayCommand implements Command {
     public void execute(SlashCommandInteractionEvent event) {
         event.deferReply().queue();
 
+        long guildId = event.getGuild().getIdLong();
+
         Member member = event.getMember();
         if (member == null) {
             event.getHook().editOriginalEmbeds(
-                    EmbedFactory.error("Erro", "Não foi possível encontrar informações do membro")
+                    EmbedFactory.error(
+                            Translation.t(guildId, "play_error_member"),
+                            Translation.t(guildId, "play_error_member_desc")
+                    )
             ).queue();
             return;
         }
@@ -59,7 +65,10 @@ public class PlayCommand implements Command {
         GuildVoiceState voiceState = member.getVoiceState();
         if (voiceState == null || !voiceState.inAudioChannel()) {
             event.getHook().editOriginalEmbeds(
-                    EmbedFactory.error("Não está em um canal de voz", "Você precisa estar em um canal de voz para tocar música!")
+                    EmbedFactory.error(
+                            Translation.t(guildId, "play_not_in_voice_title"),
+                            Translation.t(guildId, "play_not_in_voice_desc")
+                    )
             ).queue();
             return;
         }
@@ -70,7 +79,6 @@ public class PlayCommand implements Command {
         logger.info("Requisição de reprodução - Fonte: {}, Query: {}", sourceType.getDisplayName(), query);
 
         String customArtworkUrl = null;
-        long guildId = event.getGuild().getIdLong();
         MusicManager musicManager = MusicManager.getManager(guildId);
 
         if (event.getChannel() instanceof net.dv8tion.jda.api.entities.channel.concrete.TextChannel) {
@@ -97,10 +105,10 @@ public class PlayCommand implements Command {
 
                 Runnable checkFinish = () -> {
                     if (idx.get() >= limit && inFlight.get() == 0) {
-                        var embedBuilder = EmbedFactory.withRequester(event.getUser())
-                                .setTitle("Playlist adicionada")
+                        var embedBuilder = EmbedFactory.withRequester(event.getUser(), guildId)
+                                .setTitle(Translation.t(guildId, "play_playlist_added"))
                                 .setDescription(String.format("**%s**", playlistResult.playlistName != null ? playlistResult.playlistName : "Playlist"))
-                                .addField("Músicas adicionadas", String.valueOf(added[0]), true);
+                                .addField(Translation.t(guildId, "play_playlist_songs_added"), String.valueOf(added[0]), true);
 
                         if (playlistResult.artworkUrl != null) {
                             embedBuilder.setThumbnail(playlistResult.artworkUrl);
@@ -110,12 +118,14 @@ public class PlayCommand implements Command {
                     }
                 };
 
-                var initialEmbed = EmbedFactory.withRequester(event.getUser())
-                        .setTitle("Adicionando playlist...")
+                var initialEmbed = EmbedFactory.withRequester(event.getUser(), guildId)
+                        .setTitle(Translation.t(guildId, "play_playlist_adding"))
                         .setDescription(String.format("**%s**", playlistResult.playlistName != null ? playlistResult.playlistName : "Playlist"))
-                        .addField("Músicas totais", String.valueOf(playlistResult.searchQueries.size()), true);
+                        .addField(Translation.t(guildId, "play_playlist_songs_total"), String.valueOf(playlistResult.searchQueries.size()), true);
                 if (playlistResult.artworkUrl != null) initialEmbed.setThumbnail(playlistResult.artworkUrl);
                 event.getHook().editOriginalEmbeds(initialEmbed.build()).queue();
+
+                final String playlistArtwork = playlistResult.artworkUrl;
 
                 loaderRef.set((v) -> {
                     int i = idx.getAndIncrement();
@@ -131,6 +141,9 @@ public class PlayCommand implements Command {
                         public void trackLoaded(AudioTrack track) {
                             mgr.getScheduler().queue(track);
                             added[0]++;
+                            if (playlistArtwork != null && track.getInfo().identifier != null) {
+                                MusicLinkConverter.cacheTrackArtwork(track.getInfo().identifier, playlistArtwork);
+                            }
                             inFlight.decrementAndGet();
                             loaderRef.get().accept(null);
                             checkFinish.run();
@@ -139,8 +152,12 @@ public class PlayCommand implements Command {
                         @Override
                         public void playlistLoaded(AudioPlaylist playlist) {
                             if (!playlist.getTracks().isEmpty()) {
-                                mgr.getScheduler().queue(playlist.getTracks().get(0));
+                                AudioTrack track = playlist.getTracks().get(0);
+                                mgr.getScheduler().queue(track);
                                 added[0]++;
+                                if (playlistArtwork != null && track.getInfo().identifier != null) {
+                                    MusicLinkConverter.cacheTrackArtwork(track.getInfo().identifier, playlistArtwork);
+                                }
                             }
                             inFlight.decrementAndGet();
                             loaderRef.get().accept(null);
@@ -168,7 +185,10 @@ public class PlayCommand implements Command {
                 return;
             } else {
                 event.getHook().editOriginalEmbeds(
-                        EmbedFactory.error("Não foi possível processar playlist", "Não consegui extrair músicas dessa playlist")
+                        EmbedFactory.error(
+                                Translation.t(guildId, "play_playlist_convert_fail_title"),
+                                Translation.t(guildId, "play_playlist_convert_fail_desc")
+                        )
                 ).queue();
                 return;
             }
@@ -226,12 +246,12 @@ public class PlayCommand implements Command {
                     logger.info("Artwork customizada cacheada para track: {}", info.identifier);
                 }
 
-                var embed = EmbedFactory.withRequester(event.getUser())
-                        .setTitle("Adicionado à fila")
+                var embed = EmbedFactory.withRequester(event.getUser(), event.getGuild().getIdLong())
+                        .setTitle(Translation.t(event.getGuild().getIdLong(), "play_added_to_queue"))
                         .setDescription(String.format("**[%s](%s)**", info.title, info.uri))
-                        .addField("Canal", info.author, true)
-                        .addField("Duração", TimeFormat.format(track.getDuration()), true)
-                        .addField("Posição na fila", String.valueOf(musicManager.getScheduler().getQueue().size() + 1), true)
+                        .addField(Translation.t(event.getGuild().getIdLong(), "play_channel"), info.author, true)
+                        .addField(Translation.t(event.getGuild().getIdLong(), "play_duration"), TimeFormat.format(track.getDuration()), true)
+                        .addField(Translation.t(event.getGuild().getIdLong(), "play_position"), String.valueOf(musicManager.getScheduler().getQueue().size() + 1), true)
                         .setThumbnail(artworkUrl)
                         .build();
 
@@ -244,8 +264,12 @@ public class PlayCommand implements Command {
                 List<AudioTrack> tracks = playlist.getTracks();
 
                 if (tracks.isEmpty()) {
+                    long gid = event.getGuild().getIdLong();
                     event.getHook().editOriginalEmbeds(
-                            EmbedFactory.error("Playlist vazia", "Esta playlist não tem músicas")
+                            EmbedFactory.error(
+                                    Translation.t(gid, "play_playlist_empty_title"),
+                                    Translation.t(gid, "play_playlist_empty_desc")
+                            )
                     ).queue();
                     return;
                 }
@@ -287,12 +311,13 @@ public class PlayCommand implements Command {
                         logger.info("Artwork customizada cacheada para track: {}", info.identifier);
                     }
 
-                    var embed = EmbedFactory.withRequester(event.getUser())
-                            .setTitle("Adicionado à fila")
+                    long gid = event.getGuild().getIdLong();
+                    var embed = EmbedFactory.withRequester(event.getUser(), gid)
+                            .setTitle(Translation.t(gid, "play_added_to_queue"))
                             .setDescription(String.format("**[%s](%s)**", info.title, info.uri))
-                            .addField("Canal", info.author, true)
-                            .addField("Duração", TimeFormat.format(firstTrack.getDuration()), true)
-                            .addField("Posição na fila", String.valueOf(musicManager.getScheduler().getQueue().size() + 1), true)
+                            .addField(Translation.t(gid, "play_channel"), info.author, true)
+                            .addField(Translation.t(gid, "play_duration"), TimeFormat.format(firstTrack.getDuration()), true)
+                            .addField(Translation.t(gid, "play_position"), String.valueOf(musicManager.getScheduler().getQueue().size() + 1), true)
                             .setThumbnail(artworkUrl)
                             .build();
 
@@ -320,11 +345,12 @@ public class PlayCommand implements Command {
                         logger.info("Usando artwork da primeira música como fallback");
                     }
 
-                    var embedBuilder = EmbedFactory.withRequester(event.getUser())
-                            .setTitle("Playlist adicionada")
+                    long gid = event.getGuild().getIdLong();
+                    var embedBuilder = EmbedFactory.withRequester(event.getUser(), gid)
+                            .setTitle(Translation.t(gid, "play_playlist_added"))
                             .setDescription(String.format("**%s**", playlist.getName()))
-                            .addField("Músicas adicionadas", String.valueOf(count), true)
-                            .addField("Duração total", TimeFormat.formatVerbose(
+                            .addField(Translation.t(gid, "play_playlist_songs_added"), String.valueOf(count), true)
+                            .addField(Translation.t(gid, "play_playlist_total_duration"), TimeFormat.formatVerbose(
                                     tracks.stream().mapToLong(AudioTrack::getDuration).sum()
                             ), true);
 
@@ -339,8 +365,12 @@ public class PlayCommand implements Command {
 
             @Override
             public void noMatches() {
+                long gid = event.getGuild().getIdLong();
                 event.getHook().editOriginalEmbeds(
-                        EmbedFactory.error("Nenhum resultado", "Não foi possível encontrar nenhuma música com sua busca")
+                        EmbedFactory.error(
+                                Translation.t(gid, "play_no_matches_title"),
+                                Translation.t(gid, "play_no_matches_desc")
+                        )
                 ).queue();
                 logger.warn("Nenhuma correspondência encontrada para: {}", trackUrl);
             }
@@ -366,15 +396,21 @@ public class PlayCommand implements Command {
                         }
                     }).start();
                 } else {
+                    long gid = event.getGuild().getIdLong();
                     if (attemptCount > 0) {
                         logger.error("Falha ao carregar música após {} tentativas: {}", attemptCount + 1, trackUrl, exception);
                         event.getHook().editOriginalEmbeds(
-                                EmbedFactory.error("Falha ao carregar",
-                                        "Falha ao carregar música após " + (attemptCount + 1) + " tentativas: " + exception.getMessage())
+                                EmbedFactory.error(
+                                        Translation.t(gid, "play_load_failed_title"),
+                                        Translation.t(gid, "play_load_failed_retry", attemptCount + 1, exception.getMessage())
+                                )
                         ).queue();
                     } else {
                         event.getHook().editOriginalEmbeds(
-                                EmbedFactory.error("Falha ao carregar", "Falha ao carregar música: " + exception.getMessage())
+                                EmbedFactory.error(
+                                        Translation.t(gid, "play_load_failed_title"),
+                                        Translation.t(gid, "play_load_failed_desc", exception.getMessage())
+                                )
                         ).queue();
                         logger.error("Falha ao carregar música: {}", trackUrl, exception);
                     }

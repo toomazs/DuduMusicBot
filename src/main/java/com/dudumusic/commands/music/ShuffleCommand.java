@@ -2,6 +2,7 @@ package com.dudumusic.commands.music;
 
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.Command;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -37,7 +38,10 @@ public class ShuffleCommand implements Command {
 
         if (musicManager.getScheduler().getQueue().isEmpty()) {
             event.replyEmbeds(
-                    EmbedFactory.error("Fila vazia", "A fila está vazia")
+                    EmbedFactory.error(
+                            Translation.t(guildId, "shuffle_empty_title"),
+                            Translation.t(guildId, "shuffle_empty_desc")
+                    )
             ).queue();
             return;
         }
@@ -46,7 +50,10 @@ public class ShuffleCommand implements Command {
         musicManager.getScheduler().shuffle();
 
         event.replyEmbeds(
-                EmbedFactory.success("Embaralhado", "Embaralhou " + size + " músicas")
+                EmbedFactory.success(
+                        Translation.t(guildId, "shuffle_title"),
+                        Translation.t(guildId, "shuffle_desc", size)
+                )
         ).queue();
 
         logger.info("Fila embaralhada no servidor: {} ({} músicas)", guildId, size);

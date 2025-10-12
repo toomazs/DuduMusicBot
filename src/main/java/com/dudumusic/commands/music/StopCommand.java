@@ -2,6 +2,7 @@ package com.dudumusic.commands.music;
 
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.Command;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -40,7 +41,10 @@ public class StopCommand implements Command {
         event.getGuild().getAudioManager().closeAudioConnection();
 
         event.replyEmbeds(
-                EmbedFactory.success("Parado", "Reprodução parada e fila limpa")
+                EmbedFactory.success(
+                        Translation.t(guildId, "stop_title"),
+                        Translation.t(guildId, "stop_desc")
+                )
         ).queue();
 
         logger.info("Reprodução parada no servidor: {}", guildId);

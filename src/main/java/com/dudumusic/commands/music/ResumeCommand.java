@@ -2,6 +2,7 @@ package com.dudumusic.commands.music;
 
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.Command;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -36,14 +37,20 @@ public class ResumeCommand implements Command {
 
         if (musicManager.getPlayer().getPlayingTrack() == null) {
             event.replyEmbeds(
-                    EmbedFactory.error("Nada tocando", "Não há nenhuma música tocando no momento")
+                    EmbedFactory.error(
+                            Translation.t(guildId, "resume_nothing_playing"),
+                            Translation.t(guildId, "resume_no_track")
+                    )
             ).queue();
             return;
         }
 
         if (!musicManager.getPlayer().isPaused()) {
             event.replyEmbeds(
-                    EmbedFactory.warning("Não pausado", "A reprodução não está pausada")
+                    EmbedFactory.warning(
+                            Translation.t(guildId, "resume_not_paused_title"),
+                            Translation.t(guildId, "resume_not_paused_desc")
+                    )
             ).queue();
             return;
         }
@@ -51,7 +58,10 @@ public class ResumeCommand implements Command {
         musicManager.getPlayer().setPaused(false);
 
         event.replyEmbeds(
-                EmbedFactory.success("Retomado", "Reprodução retomada")
+                EmbedFactory.success(
+                        Translation.t(guildId, "resume_title"),
+                        Translation.t(guildId, "resume_desc")
+                )
         ).queue();
 
         logger.info("Reprodução retomada no servidor: {}", guildId);

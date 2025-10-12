@@ -2,6 +2,7 @@ package com.dudumusic;
 
 import com.dudumusic.core.BotConfig;
 import com.dudumusic.core.PlayerConfig;
+import com.dudumusic.core.ActivityStatusUpdater;
 import com.dudumusic.commands.Command;
 import com.dudumusic.commands.music.*;
 import com.dudumusic.commands.info.*;
@@ -10,7 +11,6 @@ import com.dudumusic.listeners.ButtonListener;
 import com.dudumusic.listeners.VoiceListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +21,7 @@ import java.util.List;
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static final List<Command> commands = new ArrayList<>();
+    private static ActivityStatusUpdater activityUpdater;
 
     public static void main(String[] args) {
         try {
@@ -39,7 +40,6 @@ public class Main {
                             GatewayIntent.GUILD_MESSAGES,
                             GatewayIntent.GUILD_VOICE_STATES
                     )
-                    .setActivity(Activity.customStatus("feito por @tomazdudux"))
                     .addEventListeners(
                             new CommandListener(),
                             new ButtonListener(),
@@ -52,6 +52,10 @@ public class Main {
 
             logger.info("4 - Registrando comandos slash");
             registerCommands(jda);
+
+            logger.info("5 - Iniciando atualizador de status de atividade");
+            activityUpdater = new ActivityStatusUpdater(jda);
+            activityUpdater.start();
 
         } catch (Exception e) {
             logger.error("Erro ao inicializar o bot", e);
@@ -70,9 +74,11 @@ public class Main {
         commands.add(new ShuffleCommand());
         commands.add(new SeekCommand());
         commands.add(new ClearCommand());
-
         commands.add(new QueueCommand());
         commands.add(new NowPlayingCommand());
+        commands.add(new LanguageCommand());
+        commands.add(new JumpCommand());
+        commands.add(new HelpCommand());
 
         for (Command command : commands) {
             jda.upsertCommand(command.getName(), command.getDescription())

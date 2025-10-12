@@ -51,29 +51,15 @@ public class EmbedFactory {
                 .build();
     }
 
-    public static MessageEmbed music(String title, String description) {
-        return new EmbedBuilder()
-                .setColor(COLOR_MUSIC)
-                .setTitle(title)
-                .setDescription(description)
-                .setTimestamp(Instant.now())
-                .build();
-    }
-
     public static EmbedBuilder musicBuilder() {
         return new EmbedBuilder()
                 .setColor(COLOR_MUSIC)
                 .setTimestamp(Instant.now());
     }
 
-    public static EmbedBuilder builder(Color color) {
-        return new EmbedBuilder()
-                .setColor(color)
-                .setTimestamp(Instant.now());
-    }
-
-    public static EmbedBuilder withRequester(User user) {
+    public static EmbedBuilder withRequester(User user, long guildId) {
+        String footerText = com.dudumusic.core.Translation.t(guildId, "embed_requested_by", user.getName());
         return musicBuilder()
-                .setFooter("Requisitado por " + user.getName(), user.getAvatarUrl());
+                .setFooter(footerText, user.getAvatarUrl());
     }
 }

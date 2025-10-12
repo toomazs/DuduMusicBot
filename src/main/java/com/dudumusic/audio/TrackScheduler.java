@@ -1,5 +1,6 @@
 package com.dudumusic.audio;
 
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import com.dudumusic.utils.SourceDetector;
 import com.dudumusic.utils.TimeFormat;
@@ -27,6 +28,7 @@ public class TrackScheduler extends AudioEventAdapter {
     private LoopMode loopMode;
     private AudioTrack lastTrack;
     private TextChannel textChannel;
+    private long guildId;
 
     public enum LoopMode {
         OFF,
@@ -38,6 +40,10 @@ public class TrackScheduler extends AudioEventAdapter {
         this.player = player;
         this.queue = new LinkedBlockingQueue<>();
         this.loopMode = LoopMode.OFF;
+    }
+
+    public void setGuildId(long guildId) {
+        this.guildId = guildId;
     }
 
     public boolean queue(AudioTrack track) {
@@ -123,6 +129,36 @@ public class TrackScheduler extends AudioEventAdapter {
         return queue;
     }
 
+    public AudioTrack jumpTo(int position) {
+        if (position <= 0) return null;
+
+        synchronized (queue) {
+            if (queue.isEmpty() || position > queue.size()) {
+                return null;
+            }
+
+            java.util.List<AudioTrack> list = new java.util.ArrayList<>(queue);
+            AudioTrack target = list.get(position - 1);
+
+            boolean removed = queue.remove(target);
+            if (!removed) {
+                java.util.Iterator<AudioTrack> it = queue.iterator();
+                while (it.hasNext()) {
+                    AudioTrack t = it.next();
+                    if (t.getInfo().title.equals(target.getInfo().title) && t.getDuration() == target.getDuration()) {
+                        it.remove();
+                        break;
+                    }
+                }
+            }
+
+            player.playTrack(target.makeClone());
+            logger.info("Jumped to track: {}", target.getInfo().title);
+            sendNowPlayingMessage(target);
+            return target;
+        }
+    }
+
     public LoopMode getLoopMode() {
         return loopMode;
     }
@@ -175,10 +211,10 @@ public class TrackScheduler extends AudioEventAdapter {
             }
 
             var embed = EmbedFactory.musicBuilder()
-                    .setTitle("Tocando agora")
+                    .setTitle(Translation.t(guildId, "track_now_playing"))
                     .setDescription(String.format("**[%s](%s)**", info.title, info.uri))
-                    .addField("Artista/Canal", info.author, true)
-                    .addField("Duração", TimeFormat.format(track.getDuration()), true)
+                    .addField(Translation.t(guildId, "track_artist"), info.author, true)
+                    .addField(Translation.t(guildId, "track_duration"), TimeFormat.format(track.getDuration()), true)
                     .setThumbnail(artworkUrl)
                     .build();
 

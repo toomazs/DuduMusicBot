@@ -11,6 +11,10 @@ public interface Command {
 
     String getDescription();
 
+    default String getDescriptionKey() {
+        return "cmd_" + getName() + "_desc";
+    }
+
     List<OptionData> getOptions();
 
     void execute(SlashCommandInteractionEvent event);

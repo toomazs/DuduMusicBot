@@ -2,6 +2,7 @@ package com.dudumusic.listeners;
 
 import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.info.QueueCommand;
+import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -40,8 +41,9 @@ public class ButtonListener extends ListenerAdapter {
                 default -> logger.warn("Ação de botão desconhecida: {}", action);
             }
         } catch (Exception e) {
+            long guildId = event.getGuild() != null ? event.getGuild().getIdLong() : 0;
             logger.error("Erro ao processar interação de botão: {}", buttonId, e);
-            event.reply("Ocorreu um erro ao processar sua solicitação. Tente novamente")
+            event.reply(Translation.t(guildId, "button_error"))
                     .setEphemeral(true)
                     .queue();
         }
@@ -56,7 +58,8 @@ public class ButtonListener extends ListenerAdapter {
         int newPage = currentPage - 1;
 
         if (newPage < 0) {
-            event.reply("Já está na primeira página!")
+            long guildId = event.getGuild().getIdLong();
+            event.reply(Translation.t(guildId, "button_first_page"))
                     .setEphemeral(true)
                     .queue();
             return;
@@ -80,7 +83,7 @@ public class ButtonListener extends ListenerAdapter {
         int totalPages = (int) Math.ceil((double) queue.size() / TRACKS_PER_PAGE);
 
         if (newPage >= totalPages) {
-            event.reply("Já está na última página!")
+            event.reply(Translation.t(guildId, "button_last_page"))
                     .setEphemeral(true)
                     .queue();
             return;
@@ -96,7 +99,7 @@ public class ButtonListener extends ListenerAdapter {
         var currentTrack = musicManager.getPlayer().getPlayingTrack();
         var queue = musicManager.getScheduler().getQueue();
 
-        MessageEmbed embed = QueueCommand.createQueueEmbed(currentTrack, queue, page);
+        MessageEmbed embed = QueueCommand.createQueueEmbed(currentTrack, queue, page, guildId);
 
         int totalPages = (int) Math.ceil((double) queue.size() / TRACKS_PER_PAGE);
 
@@ -104,7 +107,7 @@ public class ButtonListener extends ListenerAdapter {
                 .withDisabled(page == 0);
         Button nextButton = Button.secondary("queue:next:" + page, ">>")
                 .withDisabled(page >= totalPages - 1);
-        Button clearButton = Button.danger("queue:clear", "Limpar fila");
+        Button clearButton = Button.danger("queue:clear", Translation.t(guildId, "queue_btn_clear"));
 
         event.editMessageEmbeds(embed)
                 .setActionRow(prevButton, nextButton, clearButton)
@@ -118,7 +121,7 @@ public class ButtonListener extends ListenerAdapter {
         MusicManager musicManager = MusicManager.getManager(guildId);
 
         if (musicManager.getScheduler().getQueue().isEmpty()) {
-            event.reply("A fila já está vazia!")
+            event.reply(Translation.t(guildId, "clear_empty_desc"))
                     .setEphemeral(true)
                     .queue();
             return;
@@ -128,7 +131,10 @@ public class ButtonListener extends ListenerAdapter {
         musicManager.getScheduler().clearQueue();
 
         event.editMessageEmbeds(
-                EmbedFactory.success("Fila limpa", "Removidas " + size + " músicas da fila")
+                EmbedFactory.success(
+                        Translation.t(guildId, "clear_title"),
+                        Translation.t(guildId, "clear_desc", size)
+                )
         ).setComponents().queue();
 
         logger.info("Fila limpa via botão no servidor: {} ({} músicas)", guildId, size);
