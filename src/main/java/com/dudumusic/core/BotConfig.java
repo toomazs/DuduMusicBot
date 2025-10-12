@@ -12,6 +12,7 @@ public class BotConfig {
     private static String token;
     private static String spotifyClientId;
     private static String spotifyClientSecret;
+    private static String youtubeRefreshToken;
 
     public static void load() {
         logger.info("Carregando configuração");
@@ -24,6 +25,7 @@ public class BotConfig {
             token = getEnv("TOKEN");
             spotifyClientId = getEnv("SPOTIFY_CLIENT_ID");
             spotifyClientSecret = getEnv("SPOTIFY_CLIENT_SECRET");
+            youtubeRefreshToken = getEnv("YOUTUBE_REFRESH_TOKEN");
 
             if (token == null || token.isEmpty()) {
                 throw new IllegalStateException("TOKEN é obrigatório no .env");
@@ -35,6 +37,11 @@ public class BotConfig {
 
             if (spotifyClientSecret == null || spotifyClientSecret.isEmpty()) {
                 throw new IllegalStateException("SPOTIFY_CLIENT_SECRET é obrigatório no .env");
+            }
+
+            // YouTube refresh token é opcional, mas recomendado para evitar bloqueios
+            if (youtubeRefreshToken == null || youtubeRefreshToken.isEmpty()) {
+                logger.warn("YOUTUBE_REFRESH_TOKEN não configurado - pode haver problemas de reprodução");
             }
 
             logger.info("Configuração carregada com sucesso");
@@ -63,5 +70,9 @@ public class BotConfig {
 
     public static String getSpotifyClientSecret() {
         return spotifyClientSecret;
+    }
+
+    public static String getYoutubeRefreshToken() {
+        return youtubeRefreshToken;
     }
 }
