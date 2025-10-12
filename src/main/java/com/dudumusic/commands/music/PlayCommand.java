@@ -35,7 +35,7 @@ public class PlayCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Toca músicas via URL ou via query de busca";
+        return Translation.t(0L, "cmd_play_desc");
     }
 
     @Override
@@ -215,7 +215,11 @@ public class PlayCommand implements Command {
 
     private void loadWithRetry(SlashCommandInteractionEvent event, MusicManager musicManager, String trackUrl, int attemptCount, String customArtworkUrl, SourceDetector.SourceType sourceType, String originalQuery) {
         final int MAX_RETRIES = 3;
-        final long RETRY_DELAY_MS = 1500;
+        final long RETRY_DELAY_MS = 2000;
+
+        if (attemptCount > 0) {
+            logger.info("Tentativa {} de {} para carregar: {}", attemptCount + 1, MAX_RETRIES + 1, trackUrl);
+        }
 
         PlayerConfig.getInstance().loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
             @Override

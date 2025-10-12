@@ -30,7 +30,7 @@ public class QueueCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Mostra a fila de músicas";
+        return Translation.t(0L, "cmd_queue_desc");
     }
 
     @Override

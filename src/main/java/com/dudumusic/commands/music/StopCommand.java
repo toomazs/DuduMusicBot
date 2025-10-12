@@ -22,7 +22,7 @@ public class StopCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Para tudo e limpa a fila";
+        return Translation.t(0L, "cmd_stop_desc");
     }
 
     @Override

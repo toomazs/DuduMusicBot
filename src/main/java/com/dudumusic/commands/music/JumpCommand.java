@@ -18,7 +18,7 @@ public class JumpCommand implements com.dudumusic.commands.Command {
 
     @Override
     public String getDescription() {
-        return "Pula para uma música específica na fila";
+        return Translation.t(0L, "cmd_jump_desc");
     }
 
     @Override

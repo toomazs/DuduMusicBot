@@ -27,7 +27,7 @@ public class NowPlayingCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Mostra a música que está tocando";
+        return Translation.t(0L, "cmd_nowplaying_desc");
     }
 
     @Override

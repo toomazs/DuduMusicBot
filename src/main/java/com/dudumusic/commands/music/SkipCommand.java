@@ -22,7 +22,7 @@ public class SkipCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Pula a música que está tocando";
+        return Translation.t(0L, "cmd_skip_desc");
     }
 
     @Override

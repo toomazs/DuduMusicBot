@@ -17,7 +17,7 @@ public class HelpCommand implements com.dudumusic.commands.Command {
 
     @Override
     public String getDescription() {
-        return "Mostra os comandos disponíveis";
+        return Translation.t(0L, "cmd_help_desc");
     }
 
     @Override

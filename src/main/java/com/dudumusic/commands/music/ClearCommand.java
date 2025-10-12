@@ -22,7 +22,7 @@ public class ClearCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Limpa a fila de músicas";
+        return Translation.t(0L, "cmd_clear_desc");
     }
 
     @Override

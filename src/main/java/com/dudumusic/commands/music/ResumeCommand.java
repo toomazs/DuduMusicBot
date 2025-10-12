@@ -22,7 +22,7 @@ public class ResumeCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Despausa a música atual";
+        return Translation.t(0L, "cmd_resume_desc");
     }
 
     @Override

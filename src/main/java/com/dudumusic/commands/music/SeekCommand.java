@@ -23,7 +23,7 @@ public class SeekCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Pula para uma posição específica na música (em segundos)";
+        return Translation.t(0L, "cmd_seek_desc");
     }
 
     @Override

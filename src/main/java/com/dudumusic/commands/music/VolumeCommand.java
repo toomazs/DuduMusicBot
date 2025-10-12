@@ -23,7 +23,7 @@ public class VolumeCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Ajusta o volume de reprodução (0-150)";
+        return Translation.t(0L, "cmd_volume_desc");
     }
 
     @Override

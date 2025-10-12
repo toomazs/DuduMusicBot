@@ -23,7 +23,7 @@ public class LoopCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Define modo de repetição";
+        return Translation.t(0L, "cmd_loop_desc");
     }
 
     @Override

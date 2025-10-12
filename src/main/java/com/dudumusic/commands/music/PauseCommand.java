@@ -22,7 +22,7 @@ public class PauseCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Pausa a música atual";
+        return Translation.t(0L, "cmd_pause_desc");
     }
 
     @Override

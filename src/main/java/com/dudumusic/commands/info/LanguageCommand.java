@@ -18,7 +18,7 @@ public class LanguageCommand implements com.dudumusic.commands.Command {
 
     @Override
     public String getDescription() {
-        return "Define o idioma do bot para este servidor";
+        return Translation.t(0L, "cmd_language_desc");
     }
 
     @Override
