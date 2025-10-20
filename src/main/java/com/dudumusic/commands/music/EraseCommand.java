@@ -10,21 +10,21 @@ import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 import java.util.List;
 
-public class JumpCommand implements com.dudumusic.commands.Command {
+public class EraseCommand implements com.dudumusic.commands.Command {
 
     @Override
     public String getName() {
-        return "jump";
+        return "erase";
     }
 
     @Override
     public String getDescription() {
-        return Translation.t(0L, "cmd_jump_desc");
+        return Translation.t(0L, "cmd_erase_desc");
     }
 
     @Override
     public List<OptionData> getOptions() {
-        return List.of(new OptionData(OptionType.INTEGER, "position", "Posição na fila (1 = primeira da fila)", true));
+        return List.of(new OptionData(OptionType.INTEGER, "position", "Posição da música na fila para remover", true));
     }
 
     @Override
@@ -40,8 +40,8 @@ public class JumpCommand implements com.dudumusic.commands.Command {
         if (mgr == null || mgr.getScheduler() == null) {
             event.replyEmbeds(
                     EmbedFactory.error(
-                            Translation.t(gid, "jump_invalid"),
-                            Translation.t(gid, "jump_no_queue")
+                            Translation.t(gid, "erase_no_manager_title"),
+                            Translation.t(gid, "erase_no_manager_desc")
                     )
             ).queue();
             return;
@@ -50,20 +50,20 @@ public class JumpCommand implements com.dudumusic.commands.Command {
         if (pos <= 0) {
             event.replyEmbeds(
                     EmbedFactory.error(
-                            Translation.t(gid, "jump_invalid"),
-                            Translation.t(gid, "jump_no_queue")
+                            Translation.t(gid, "erase_invalid_title"),
+                            Translation.t(gid, "erase_invalid_desc")
                     )
             ).queue();
             return;
         }
 
         var scheduler = mgr.getScheduler();
-        var result = scheduler.jumpTo(pos);
+        var result = scheduler.removeTrack(pos);
         if (result == null) {
             event.replyEmbeds(
                     EmbedFactory.error(
-                            Translation.t(gid, "jump_invalid"),
-                            Translation.t(gid, "jump_no_queue")
+                            Translation.t(gid, "erase_invalid_title"),
+                            Translation.t(gid, "erase_not_found")
                     )
             ).queue();
             return;
@@ -71,8 +71,8 @@ public class JumpCommand implements com.dudumusic.commands.Command {
 
         event.replyEmbeds(
                 EmbedFactory.success(
-                        Translation.t(gid, "skip_title"),
-                        Translation.t(gid, "jump_done", result.getInfo().title)
+                        Translation.t(gid, "erase_title"),
+                        Translation.t(gid, "erase_desc", result.getInfo().title, pos)
                 )
         ).queue();
     }

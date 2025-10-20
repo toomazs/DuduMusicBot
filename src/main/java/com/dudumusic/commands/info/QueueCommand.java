@@ -63,8 +63,10 @@ public class QueueCommand implements Command {
         if (totalPages > 1) {
             event.replyEmbeds(embed)
                     .addActionRow(
+                            Button.secondary("queue:first", "|<<").asDisabled(),
                             Button.secondary("queue:prev:0", "<<").asDisabled(),
-                            Button.secondary("queue:next:1", ">>"),
+                            Button.secondary("queue:next:0", ">>"),
+                            Button.secondary("queue:last", ">>|"),
                             Button.danger("queue:clear", Translation.t(guildId, "queue_btn_clear"))
                     )
                     .queue();

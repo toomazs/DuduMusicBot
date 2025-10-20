@@ -52,7 +52,7 @@ public class MusicLinkConverter {
                 case DEEZER:
                     return convertDeezerToSearchWithArt(url);
                 case APPLE_MUSIC:
-                    return convertAppleMusicToSearchWithArt(url);
+                    return null;
                 default:
                     return null;
             }
@@ -201,157 +201,9 @@ public class MusicLinkConverter {
         return null;
     }
 
-    private static ConversionResult convertAppleMusicToSearchWithArt(String url) {
-        try {
-            AppleMusicMetadata metadata = fetchAppleMusicMetadata(url);
-
-            if (metadata != null && metadata.songName != null) {
-                String searchQuery = metadata.artist != null
-                    ? "ytsearch:" + metadata.artist + " " + metadata.songName
-                    : "ytsearch:" + metadata.songName;
-
-                logger.info("Convertendo link Apple Music para busca no YouTube: {} (artwork: {})",
-                    metadata.artist != null ? metadata.artist + " - " + metadata.songName : metadata.songName,
-                    metadata.artworkUrl != null ? "sim" : "não");
-
-                if (metadata.artworkUrl != null) {
-                    artworkCache.put(searchQuery, metadata.artworkUrl);
-                }
-                return new ConversionResult(searchQuery, metadata.artworkUrl);
-            }
-        } catch (Exception e) {
-            logger.error("Erro ao processar URL Apple Music: {}", url, e);
-        }
-
-        return null;
-    }
-
-    private static class AppleMusicMetadata {
-        String songName;
-        String artist;
-        String artworkUrl;
-
-        AppleMusicMetadata(String songName, String artist, String artworkUrl) {
-            this.songName = songName;
-            this.artist = artist;
-            this.artworkUrl = artworkUrl;
-        }
-    }
-
-    private static AppleMusicMetadata fetchAppleMusicMetadata(String urlString) {
-        HttpURLConnection connection = null;
-        try {
-            URL url = new URL(urlString);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
-            connection.setInstanceFollowRedirects(true);
-
-            int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)
-                );
-
-                String line;
-                StringBuilder content = new StringBuilder();
-                while ((line = reader.readLine()) != null) {
-                    content.append(line).append("\n");
-                    if (content.length() > 300000) break;
-                }
-                reader.close();
-
-                String html = content.toString();
-
-                String songTitle = null;
-                String artist = null;
-                String artworkUrl = null;
-
-                Pattern jsonLdPattern = Pattern.compile("<script type=\"application/ld\\+json\">\\s*([\\s\\S]*?)\\s*</script>", Pattern.CASE_INSENSITIVE);
-                Matcher jsonMatcher = jsonLdPattern.matcher(html);
-
-                while (jsonMatcher.find()) {
-                    String jsonLd = jsonMatcher.group(1);
-
-                    if (jsonLd.contains("\"@type\"") && (jsonLd.contains("MusicRecording") || jsonLd.contains("MusicComposition"))) {
-                        Pattern namePattern = Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"");
-                        Matcher nameMatcher = namePattern.matcher(jsonLd);
-                        if (nameMatcher.find()) {
-                            songTitle = nameMatcher.group(1);
-                        }
-
-                        Pattern multiArtistPattern = Pattern.compile("\"byArtist\"\\s*:\\s*\\[([^\\]]+)\\]");
-                        Matcher multiMatcher = multiArtistPattern.matcher(jsonLd);
-                        if (multiMatcher.find()) {
-                            String artistsJson = multiMatcher.group(1);
-                            Pattern artistNamePattern = Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"");
-                            Matcher artistNameMatcher = artistNamePattern.matcher(artistsJson);
-                            StringBuilder artists = new StringBuilder();
-                            while (artistNameMatcher.find()) {
-                                if (artists.length() > 0) artists.append(" & ");
-                                artists.append(artistNameMatcher.group(1));
-                            }
-                            if (artists.length() > 0) {
-                                artist = artists.toString();
-                            }
-                        }
-
-                        Pattern imagePattern = Pattern.compile("\"image\"\\s*:\\s*\"([^\"]+)\"");
-                        Matcher imageMatcher = imagePattern.matcher(jsonLd);
-                        if (imageMatcher.find()) {
-                            artworkUrl = imageMatcher.group(1);
-                            artworkUrl = artworkUrl.replaceAll("/(\\d+)x\\d+.*", "/1200x1200bb.jpg");
-                        }
-
-                        break;
-                    }
-                }
-
-                if (songTitle == null) {
-                    String ogTitle = extractMetaTag(html, "og:title");
-                    if (ogTitle != null) {
-                        ogTitle = ogTitle.replaceAll("&amp;", "&");
-                        ogTitle = ogTitle.replaceAll("&nbsp;", " ");
-
-                        Pattern titleArtistPattern = Pattern.compile("^(.+?)\\s+(?:by|de)\\s+(.+?)\\s+(?:on|no)\\s+Apple", Pattern.CASE_INSENSITIVE);
-                        Matcher titleArtistMatcher = titleArtistPattern.matcher(ogTitle);
-                        if (titleArtistMatcher.find()) {
-                            songTitle = titleArtistMatcher.group(1).trim();
-                            artist = titleArtistMatcher.group(2).trim();
-                        } else {
-                            songTitle = ogTitle.replaceAll(" - Single$", "").trim();
-                            songTitle = songTitle.replaceAll(" (?:by|de) .+? (?:on|no) Apple.?Music", "").trim();
-                        }
-                    }
-                }
-
-                if (artworkUrl == null) {
-                    artworkUrl = extractMetaTag(html, "og:image");
-                    if (artworkUrl != null) {
-                        artworkUrl = artworkUrl.replaceAll("/(\\d+)x\\d+.*", "/1200x1200bb.jpg");
-                    }
-                }
-
-                if (songTitle != null && !songTitle.isEmpty()) {
-                    return new AppleMusicMetadata(songTitle, artist, artworkUrl);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Erro ao buscar metadados do Apple Music: {}", urlString, e);
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-
-        return null;
-    }
 
     public static boolean needsConversion(SourceDetector.SourceType sourceType) {
-        return sourceType == SourceDetector.SourceType.DEEZER ||
-               sourceType == SourceDetector.SourceType.APPLE_MUSIC;
+        return sourceType == SourceDetector.SourceType.DEEZER;
     }
 
     public static class PlaylistResult {

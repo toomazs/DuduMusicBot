@@ -5,6 +5,7 @@ import com.dudumusic.audio.TrackScheduler;
 import com.dudumusic.commands.Command;
 import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
+import com.dudumusic.utils.VoiceValidator;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
@@ -39,6 +40,11 @@ public class LoopCommand implements Command {
     @Override
     public void execute(SlashCommandInteractionEvent event) {
         long guildId = event.getGuild().getIdLong();
+
+        if (!VoiceValidator.validate(event, true)) {
+            return;
+        }
+
         MusicManager musicManager = MusicManager.getManager(guildId);
 
         String modeStr = event.getOption("mode").getAsString();

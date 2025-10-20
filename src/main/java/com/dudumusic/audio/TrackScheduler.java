@@ -120,6 +120,14 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public void clearQueue() {
+        clearQueue(true, "Fila limpa com /clear");
+    }
+
+    public void clearQueue(boolean saveToHistory, String historyDescription) {
+        if (saveToHistory && !queue.isEmpty()) {
+            List<AudioTrack> currentQueue = new ArrayList<>(queue);
+            QueueHistory.getInstance(guildId).saveQueue(currentQueue, historyDescription);
+        }
         int size = queue.size();
         queue.clear();
         logger.info("Fila limpa ({} músicas removidas)", size);
@@ -159,6 +167,50 @@ public class TrackScheduler extends AudioEventAdapter {
         }
     }
 
+    public AudioTrack switchTracks(int fromPosition, int toPosition) {
+        if (fromPosition <= 0 || toPosition <= 0) return null;
+        if (fromPosition == toPosition) return null;
+
+        synchronized (queue) {
+            if (queue.isEmpty() || fromPosition > queue.size() || toPosition > queue.size()) {
+                return null;
+            }
+
+            java.util.List<AudioTrack> list = new java.util.ArrayList<>(queue);
+            AudioTrack trackToMove = list.get(fromPosition - 1);
+
+            list.remove(fromPosition - 1);
+            list.add(toPosition - 1, trackToMove);
+
+            queue.clear();
+            queue.addAll(list);
+
+            logger.info("Switched track '{}' from position {} to {}", trackToMove.getInfo().title, fromPosition, toPosition);
+            return trackToMove;
+        }
+    }
+
+    public AudioTrack removeTrack(int position) {
+        if (position <= 0) return null;
+
+        synchronized (queue) {
+            if (queue.isEmpty() || position > queue.size()) {
+                return null;
+            }
+
+            java.util.List<AudioTrack> list = new java.util.ArrayList<>(queue);
+            AudioTrack trackToRemove = list.get(position - 1);
+
+            list.remove(position - 1);
+
+            queue.clear();
+            queue.addAll(list);
+
+            logger.info("Removed track '{}' from position {}", trackToRemove.getInfo().title, position);
+            return trackToRemove;
+        }
+    }
+
     public LoopMode getLoopMode() {
         return loopMode;
     }
@@ -172,8 +224,66 @@ public class TrackScheduler extends AudioEventAdapter {
         return lastTrack;
     }
 
+    public AudioTrack rewind() {
+        if (lastTrack == null) {
+            logger.warn("Não há música anterior para retornar");
+            return null;
+        }
+
+        AudioTrack currentTrack = player.getPlayingTrack();
+
+        if (currentTrack != null) {
+            List<AudioTrack> tracks = new ArrayList<>(queue);
+            tracks.add(0, currentTrack.makeClone());
+            queue.clear();
+            queue.addAll(tracks);
+            logger.info("Música atual '{}' retornou para o início da fila", currentTrack.getInfo().title);
+        }
+
+        AudioTrack trackToPlay = lastTrack.makeClone();
+        player.playTrack(trackToPlay);
+        logger.info("Voltando para a música anterior: {}", trackToPlay.getInfo().title);
+
+        sendNowPlayingMessage(trackToPlay);
+
+        return trackToPlay;
+    }
+
     public void setTextChannel(TextChannel textChannel) {
         this.textChannel = textChannel;
+    }
+
+    public TextChannel getTextChannel() {
+        return textChannel;
+    }
+
+    public int restoreQueue(QueueHistory.QueueSnapshot snapshot) {
+        if (snapshot == null) {
+            logger.warn("Tentativa de restaurar snapshot nulo");
+            return 0;
+        }
+
+        List<AudioTrack> tracks = snapshot.getTracks();
+        if (tracks.isEmpty()) {
+            logger.warn("Snapshot não contém músicas");
+            return 0;
+        }
+
+        if (!queue.isEmpty()) {
+            List<AudioTrack> currentQueue = new ArrayList<>(queue);
+            QueueHistory.getInstance(guildId).saveQueue(currentQueue, "Fila substituída por fila anterior");
+        }
+
+        queue.clear();
+        int added = 0;
+        for (AudioTrack track : tracks) {
+            if (queue.offer(track)) {
+                added++;
+            }
+        }
+
+        logger.info("Fila restaurada: {} músicas do histórico", added);
+        return added;
     }
 
     private void sendNowPlayingMessage(AudioTrack track) {
@@ -210,9 +320,11 @@ public class TrackScheduler extends AudioEventAdapter {
                 }
             }
 
-            var embed = EmbedFactory.musicBuilder()
+            String displayTitle = getDisplayTitle(info.title);
+
+            var embed = EmbedFactory.nowPlayingBuilder()
                     .setTitle(Translation.t(guildId, "track_now_playing"))
-                    .setDescription(String.format("**[%s](%s)**", info.title, info.uri))
+                    .setDescription(String.format("**[%s](%s)**", displayTitle, info.uri))
                     .addField(Translation.t(guildId, "track_artist"), info.author, true)
                     .addField(Translation.t(guildId, "track_duration"), TimeFormat.format(track.getDuration()), true)
                     .setThumbnail(artworkUrl)
@@ -225,5 +337,12 @@ public class TrackScheduler extends AudioEventAdapter {
         } catch (Exception e) {
             logger.error("Erro ao enviar mensagem 'Tocando agora'", e);
         }
+    }
+
+    private String getDisplayTitle(String title) {
+        if (title == null || title.trim().isEmpty() || title.matches("^\\s*$")) {
+            return Translation.t(guildId, "track_untitled");
+        }
+        return title;
     }
 }

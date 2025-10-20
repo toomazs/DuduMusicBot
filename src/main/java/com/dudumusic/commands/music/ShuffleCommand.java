@@ -5,6 +5,7 @@ import com.dudumusic.commands.Command;
 import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import com.dudumusic.utils.VoiceValidator;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -34,6 +35,11 @@ public class ShuffleCommand implements Command {
     @Override
     public void execute(@NotNull SlashCommandInteractionEvent event) {
         long guildId = event.getGuild().getIdLong();
+
+        if (!VoiceValidator.validate(event, true)) {
+            return;
+        }
+
         MusicManager musicManager = MusicManager.getManager(guildId);
 
         if (musicManager.getScheduler().getQueue().isEmpty()) {

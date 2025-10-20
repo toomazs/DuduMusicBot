@@ -9,6 +9,7 @@ import com.dudumusic.utils.MusicLinkConverter;
 import com.dudumusic.utils.SourceDetector;
 import com.dudumusic.utils.SpotifyApiClient;
 import com.dudumusic.utils.TimeFormat;
+import com.dudumusic.utils.VoiceValidator;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
@@ -50,26 +51,10 @@ public class PlayCommand implements Command {
         event.deferReply().queue();
 
         long guildId = event.getGuild().getIdLong();
-
         Member member = event.getMember();
-        if (member == null) {
-            event.getHook().editOriginalEmbeds(
-                    EmbedFactory.error(
-                            Translation.t(guildId, "play_error_member"),
-                            Translation.t(guildId, "play_error_member_desc")
-                    )
-            ).queue();
-            return;
-        }
+        Member bot = event.getGuild().getSelfMember();
 
-        GuildVoiceState voiceState = member.getVoiceState();
-        if (voiceState == null || !voiceState.inAudioChannel()) {
-            event.getHook().editOriginalEmbeds(
-                    EmbedFactory.error(
-                            Translation.t(guildId, "play_not_in_voice_title"),
-                            Translation.t(guildId, "play_not_in_voice_desc")
-                    )
-            ).queue();
+        if (!VoiceValidator.validateDeferred(event.getHook(), member, bot, guildId, false)) {
             return;
         }
 
@@ -87,7 +72,7 @@ public class PlayCommand implements Command {
 
         AudioManager audioManager = event.getGuild().getAudioManager();
         if (!audioManager.isConnected()) {
-            VoiceChannel voiceChannel = (VoiceChannel) voiceState.getChannel();
+            VoiceChannel voiceChannel = (VoiceChannel) member.getVoiceState().getChannel();
             audioManager.openAudioConnection(voiceChannel);
             audioManager.setSendingHandler(musicManager.getAudioHandler());
             logger.info("Conectado ao canal de voz: {}", voiceChannel.getName());
@@ -139,10 +124,15 @@ public class PlayCommand implements Command {
                     PlayerConfig.getInstance().loadItemOrdered(mgr, toLoad, new com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler() {
                         @Override
                         public void trackLoaded(AudioTrack track) {
-                            mgr.getScheduler().queue(track);
-                            added[0]++;
-                            if (playlistArtwork != null && track.getInfo().identifier != null) {
-                                MusicLinkConverter.cacheTrackArtwork(track.getInfo().identifier, playlistArtwork);
+                            if (!isInvalidTrack(track)) {
+                                mgr.getScheduler().queue(track);
+                                added[0]++;
+                                if (playlistArtwork != null && track.getInfo().identifier != null) {
+                                    MusicLinkConverter.cacheTrackArtwork(track.getInfo().identifier, playlistArtwork);
+                                }
+                            } else {
+                                logger.warn("Track inválido pulado de playlist convertida: {} - {}",
+                                        track.getInfo().title, track.getInfo().author);
                             }
                             inFlight.decrementAndGet();
                             loaderRef.get().accept(null);
@@ -153,10 +143,15 @@ public class PlayCommand implements Command {
                         public void playlistLoaded(AudioPlaylist playlist) {
                             if (!playlist.getTracks().isEmpty()) {
                                 AudioTrack track = playlist.getTracks().get(0);
-                                mgr.getScheduler().queue(track);
-                                added[0]++;
-                                if (playlistArtwork != null && track.getInfo().identifier != null) {
-                                    MusicLinkConverter.cacheTrackArtwork(track.getInfo().identifier, playlistArtwork);
+                                if (!isInvalidTrack(track)) {
+                                    mgr.getScheduler().queue(track);
+                                    added[0]++;
+                                    if (playlistArtwork != null && track.getInfo().identifier != null) {
+                                        MusicLinkConverter.cacheTrackArtwork(track.getInfo().identifier, playlistArtwork);
+                                    }
+                                } else {
+                                    logger.warn("Track inválido pulado de playlist convertida (search result): {} - {}",
+                                            track.getInfo().title, track.getInfo().author);
                                 }
                             }
                             inFlight.decrementAndGet();
@@ -192,6 +187,15 @@ public class PlayCommand implements Command {
                 ).queue();
                 return;
             }
+        } else if (sourceType == SourceDetector.SourceType.APPLE_MUSIC) {
+            event.getHook().editOriginalEmbeds(
+                    EmbedFactory.error(
+                            Translation.t(guildId, "play_apple_music_unsupported_title"),
+                            Translation.t(guildId, "play_apple_music_unsupported_desc")
+                    )
+            ).queue();
+            logger.warn("Link Apple Music não suportado: {}", query);
+            return;
         } else if (MusicLinkConverter.needsConversion(sourceType)) {
             String convertedQuery = MusicLinkConverter.convertToYouTubeSearch(query, sourceType);
             if (convertedQuery != null) {
@@ -214,8 +218,9 @@ public class PlayCommand implements Command {
     }
 
     private void loadWithRetry(SlashCommandInteractionEvent event, MusicManager musicManager, String trackUrl, int attemptCount, String customArtworkUrl, SourceDetector.SourceType sourceType, String originalQuery) {
-        final int MAX_RETRIES = 3;
-        final long RETRY_DELAY_MS = 2000;
+        final int MAX_RETRIES = 5;
+        final long BASE_RETRY_DELAY_MS = 1500;
+        final long retryDelay = BASE_RETRY_DELAY_MS * (attemptCount + 1);
 
         if (attemptCount > 0) {
             logger.info("Tentativa {} de {} para carregar: {}", attemptCount + 1, MAX_RETRIES + 1, trackUrl);
@@ -224,7 +229,18 @@ public class PlayCommand implements Command {
         PlayerConfig.getInstance().loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
-                musicManager.getScheduler().queue(track);
+                if (isInvalidTrack(track)) {
+                    logger.warn("Track inválido detectado e pulado: {} - {} (duração: {})",
+                            track.getInfo().title, track.getInfo().author, track.getDuration());
+                    long gid = event.getGuild().getIdLong();
+                    event.getHook().editOriginalEmbeds(
+                            EmbedFactory.error(
+                                    Translation.t(gid, "play_invalid_track_title"),
+                                    Translation.t(gid, "play_invalid_track_desc")
+                            )
+                    ).queue();
+                    return;
+                }
 
                 var info = track.getInfo();
                 String artworkUrl = customArtworkUrl != null ? customArtworkUrl : info.artworkUrl;
@@ -250,16 +266,26 @@ public class PlayCommand implements Command {
                     logger.info("Artwork customizada cacheada para track: {}", info.identifier);
                 }
 
-                var embed = EmbedFactory.withRequester(event.getUser(), event.getGuild().getIdLong())
-                        .setTitle(Translation.t(event.getGuild().getIdLong(), "play_added_to_queue"))
-                        .setDescription(String.format("**[%s](%s)**", info.title, info.uri))
-                        .addField(Translation.t(event.getGuild().getIdLong(), "play_channel"), info.author, true)
-                        .addField(Translation.t(event.getGuild().getIdLong(), "play_duration"), TimeFormat.format(track.getDuration()), true)
-                        .addField(Translation.t(event.getGuild().getIdLong(), "play_position"), String.valueOf(musicManager.getScheduler().getQueue().size() + 1), true)
-                        .setThumbnail(artworkUrl)
-                        .build();
+                long gid = event.getGuild().getIdLong();
+                String displayTitle = getDisplayTitle(info.title, gid);
 
-                event.getHook().editOriginalEmbeds(embed).queue();
+                boolean wasPlaying = musicManager.getPlayer().getPlayingTrack() != null;
+                musicManager.getScheduler().queue(track);
+
+                var embedBuilder = EmbedFactory.withRequester(event.getUser(), gid)
+                        .setTitle(Translation.t(gid, "play_added_to_queue"))
+                        .setDescription(String.format("**[%s](%s)**", displayTitle, info.uri))
+                        .addField(Translation.t(gid, "play_channel"), info.author, true)
+                        .addField(Translation.t(gid, "play_duration"), TimeFormat.format(track.getDuration()), true);
+
+                if (wasPlaying) {
+                    int queuePosition = musicManager.getScheduler().getQueue().size();
+                    embedBuilder.addField(Translation.t(gid, "play_position"), String.valueOf(queuePosition), true);
+                }
+
+                embedBuilder.setThumbnail(artworkUrl);
+
+                event.getHook().editOriginalEmbeds(embedBuilder.build()).queue();
                 logger.info("Música carregada: {}", info.title);
             }
 
@@ -283,7 +309,19 @@ public class PlayCommand implements Command {
 
                 if (isSearchResult) {
                     AudioTrack firstTrack = tracks.get(0);
-                    musicManager.getScheduler().queue(firstTrack);
+
+                    if (isInvalidTrack(firstTrack)) {
+                        logger.warn("Track inválido detectado em search result e pulado: {} - {}",
+                                firstTrack.getInfo().title, firstTrack.getInfo().author);
+                        long gid = event.getGuild().getIdLong();
+                        event.getHook().editOriginalEmbeds(
+                                EmbedFactory.error(
+                                        Translation.t(gid, "play_invalid_track_title"),
+                                        Translation.t(gid, "play_invalid_track_desc")
+                                )
+                        ).queue();
+                        return;
+                    }
 
                     var info = firstTrack.getInfo();
                     String artworkUrl = customArtworkUrl != null ? customArtworkUrl : info.artworkUrl;
@@ -316,23 +354,42 @@ public class PlayCommand implements Command {
                     }
 
                     long gid = event.getGuild().getIdLong();
-                    var embed = EmbedFactory.withRequester(event.getUser(), gid)
-                            .setTitle(Translation.t(gid, "play_added_to_queue"))
-                            .setDescription(String.format("**[%s](%s)**", info.title, info.uri))
-                            .addField(Translation.t(gid, "play_channel"), info.author, true)
-                            .addField(Translation.t(gid, "play_duration"), TimeFormat.format(firstTrack.getDuration()), true)
-                            .addField(Translation.t(gid, "play_position"), String.valueOf(musicManager.getScheduler().getQueue().size() + 1), true)
-                            .setThumbnail(artworkUrl)
-                            .build();
+                    String displayTitle = getDisplayTitle(info.title, gid);
 
-                    event.getHook().editOriginalEmbeds(embed).queue();
+                    boolean wasPlaying = musicManager.getPlayer().getPlayingTrack() != null;
+                    musicManager.getScheduler().queue(firstTrack);
+
+                    var embedBuilder = EmbedFactory.withRequester(event.getUser(), gid)
+                            .setTitle(Translation.t(gid, "play_added_to_queue"))
+                            .setDescription(String.format("**[%s](%s)**", displayTitle, info.uri))
+                            .addField(Translation.t(gid, "play_channel"), info.author, true)
+                            .addField(Translation.t(gid, "play_duration"), TimeFormat.format(firstTrack.getDuration()), true);
+
+                    if (wasPlaying) {
+                        int queuePosition = musicManager.getScheduler().getQueue().size();
+                        embedBuilder.addField(Translation.t(gid, "play_position"), String.valueOf(queuePosition), true);
+                    }
+
+                    embedBuilder.setThumbnail(artworkUrl);
+
+                    event.getHook().editOriginalEmbeds(embedBuilder.build()).queue();
                     logger.info("Música carregada (do resultado da busca): {}", info.title);
                 } else {
                     int count = 0;
+                    int skipped = 0;
                     for (AudioTrack track : tracks) {
+                        if (isInvalidTrack(track)) {
+                            logger.warn("Track inválido pulado da playlist: {} - {} (duração: {})",
+                                    track.getInfo().title, track.getInfo().author, track.getDuration());
+                            skipped++;
+                            continue;
+                        }
                         if (musicManager.getScheduler().queue(track)) {
                             count++;
                         }
+                    }
+                    if (skipped > 0) {
+                        logger.info("Playlist carregada com {} tracks válidos, {} inválidos pulados", count, skipped);
                     }
 
                     String playlistArtwork = null;
@@ -381,22 +438,20 @@ public class PlayCommand implements Command {
 
             @Override
             public void loadFailed(FriendlyException exception) {
-                boolean isRetryable = exception.getMessage() != null &&
-                        (exception.getMessage().contains("timed out") ||
-                         exception.getMessage().contains("SocketTimeout") ||
-                         exception.getCause() instanceof java.net.SocketTimeoutException);
+                boolean isRetryable = isRetryableException(exception);
 
                 if (isRetryable && attemptCount < MAX_RETRIES) {
-                    logger.warn("Tentativa {} de {} falhou para: {}. Tentando novamente em {}ms...",
-                            attemptCount + 1, MAX_RETRIES, trackUrl, RETRY_DELAY_MS);
+                    logger.warn("Tentativa {} de {} falhou para: {}. Tentando novamente em {}ms... Motivo: {}",
+                            attemptCount + 1, MAX_RETRIES + 1, trackUrl, retryDelay,
+                            exception.getMessage() != null ? exception.getMessage() : "Unknown");
 
                     new Thread(() -> {
                         try {
-                            Thread.sleep(RETRY_DELAY_MS);
+                            Thread.sleep(retryDelay);
                             loadWithRetry(event, musicManager, trackUrl, attemptCount + 1, customArtworkUrl, sourceType, originalQuery);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
-                            logger.error("Thread retry interompida", e);
+                            logger.error("Thread retry interrompida", e);
                         }
                     }).start();
                 } else {
@@ -421,5 +476,55 @@ public class PlayCommand implements Command {
                 }
             }
         });
+    }
+
+    private boolean isRetryableException(FriendlyException exception) {
+        if (exception == null) return false;
+
+        String message = exception.getMessage();
+        if (message != null) {
+            message = message.toLowerCase();
+            if (message.contains("timed out") ||
+                message.contains("timeout") ||
+                message.contains("read timed out") ||
+                message.contains("something went wrong when looking up") ||
+                message.contains("connection reset") ||
+                message.contains("connection refused") ||
+                message.contains("temporarily unavailable")) {
+                return true;
+            }
+        }
+
+        Throwable cause = exception.getCause();
+        while (cause != null) {
+            if (cause instanceof java.net.SocketTimeoutException ||
+                cause instanceof java.net.ConnectException ||
+                cause instanceof java.net.SocketException ||
+                cause instanceof java.io.IOException) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+
+        return false;
+    }
+
+    private String getDisplayTitle(String title, long guildId) {
+        if (title == null || title.trim().isEmpty() || title.matches("^\\s*$")) {
+            return Translation.t(guildId, "track_untitled");
+        }
+        return title;
+    }
+
+    private boolean isInvalidTrack(AudioTrack track) {
+        if (track == null) return true;
+
+        var info = track.getInfo();
+
+        boolean hasNoTitle = info.title == null || info.title.trim().isEmpty();
+        boolean isUnknownArtist = info.author != null && info.author.equalsIgnoreCase("Unknown");
+        boolean hasZeroDuration = track.getDuration() == 0;
+
+        return (hasNoTitle || hasZeroDuration) && isUnknownArtist;
     }
 }

@@ -78,6 +78,10 @@ public class Main {
         commands.add(new NowPlayingCommand());
         commands.add(new LanguageCommand());
         commands.add(new JumpCommand());
+        commands.add(new SwitchCommand());
+        commands.add(new EraseCommand());
+        commands.add(new RewindCommand());
+        commands.add(new PreviousQueueCommand());
         commands.add(new HelpCommand());
 
         for (Command command : commands) {

@@ -21,6 +21,50 @@ public class Translation {
         pt.put("jump_no_queue", "Não há músicas suficientes na fila");
         pt.put("jump_done", "Pulando para: %s");
 
+        // Switch Command
+        pt.put("switch_no_manager_title", "Erro");
+        pt.put("switch_no_manager_desc", "Não há nenhuma música na fila");
+        pt.put("switch_invalid_title", "Posição inválida");
+        pt.put("switch_invalid_desc", "As posições devem ser maiores que zero");
+        pt.put("switch_invalid_queue", "Uma ou ambas as posições estão fora do alcance da fila");
+        pt.put("switch_same_position_title", "Mesma posição");
+        pt.put("switch_same_position_desc", "A música já está nessa posição");
+        pt.put("switch_title", "Posição alterada");
+        pt.put("switch_desc", "**%s** movida da posição %d para %d");
+
+        // Erase Command
+        pt.put("erase_no_manager_title", "Erro");
+        pt.put("erase_no_manager_desc", "Não há nenhuma música na fila");
+        pt.put("erase_invalid_title", "Posição inválida");
+        pt.put("erase_invalid_desc", "A posição deve ser maior que zero");
+        pt.put("erase_not_found", "Não há música nessa posição da fila");
+        pt.put("erase_title", "Música removida");
+        pt.put("erase_desc", "**%s** removida da posição %d");
+
+        // Rewind Command
+        pt.put("rewind_no_manager_title", "Erro");
+        pt.put("rewind_no_manager_desc", "Não há nenhuma música tocando");
+        pt.put("rewind_no_previous_title", "Sem música anterior");
+        pt.put("rewind_no_previous_desc", "Não há música anterior para retornar");
+        pt.put("rewind_title", "Voltando");
+        pt.put("rewind_desc", "Voltando para: **%s**");
+
+        // PreviousQueue Command
+        pt.put("previousqueue_no_manager_title", "Erro");
+        pt.put("previousqueue_no_manager_desc", "Não há player ativo");
+        pt.put("previousqueue_no_history_title", "Sem histórico");
+        pt.put("previousqueue_no_history_desc", "Não há filas anteriores salvas");
+        pt.put("previousqueue_title", "Filas Anteriores");
+        pt.put("previousqueue_select_prompt", "Selecione uma fila anterior para restaurar:");
+        pt.put("previousqueue_tracks", "%d músicas");
+        pt.put("previousqueue_invalid_selection", "Seleção inválida");
+        pt.put("previousqueue_restored_title", "Fila restaurada");
+        pt.put("previousqueue_restored_desc", "**%d músicas** restauradas de: %s");
+        pt.put("time_seconds_ago", "%d segundos atrás");
+        pt.put("time_minutes_ago", "%d minutos atrás");
+        pt.put("time_hours_ago", "%d horas atrás");
+        pt.put("time_days_ago", "%d dias atrás");
+
         // Help Command
         pt.put("help_title", "Comandos disponíveis");
         pt.put("help_desc", "Lista de comandos:");
@@ -134,11 +178,16 @@ public class Translation {
         pt.put("play_load_failed_retry", "Falha ao carregar música após %d tentativas: %s");
         pt.put("play_playlist_convert_fail_title", "Playlists do Apple Music não suportadas");
         pt.put("play_playlist_convert_fail_desc", "Playlists do Apple Music ainda não são suportadas. Use Spotify, YouTube ou Deezer, ou cole músicas individuais do Apple Music!");
+        pt.put("play_apple_music_unsupported_title", "Apple Music não suportado");
+        pt.put("play_apple_music_unsupported_desc", "Infelizmente, músicas do Apple Music não são mais suportadas porque a Apple encripta o site, impossibilitando a extração de informações.\n\nUse **Spotify**, **YouTube** ou **Deezer** como alternativa!");
+        pt.put("play_invalid_track_title", "Música inválida");
+        pt.put("play_invalid_track_desc", "Esta música não está disponível ou foi removida do Spotify");
 
         // TrackScheduler
         pt.put("track_now_playing", "Tocando agora");
         pt.put("track_artist", "Artista/Canal");
         pt.put("track_duration", "Duração");
+        pt.put("track_untitled", "Música sem nome");
 
         // EmbedFactory
         pt.put("embed_requested_by", "Requisitado por %s");
@@ -146,6 +195,15 @@ public class Translation {
         // Voice State
         pt.put("voice_not_in_channel_title", "Não está em um canal de voz");
         pt.put("voice_not_in_channel_desc", "Você precisa estar em um canal de voz!");
+        pt.put("voice_user_must_be_in_channel", "Você precisa estar em um canal de voz para usar este comando!");
+        pt.put("voice_not_same_channel_title", "Canal de voz diferente");
+        pt.put("voice_not_same_channel_desc", "Você precisa estar no mesmo canal de voz que eu!");
+        pt.put("voice_bot_not_in_channel_title", "Bot não está em canal");
+        pt.put("voice_bot_not_in_channel_desc", "Não estou tocando nada no momento!");
+        pt.put("voice_disconnected_title", "Desconectado");
+        pt.put("voice_disconnected_desc", "Fui desconectado do canal de voz.\n\nA fila foi salva e pode ser restaurada com /previousqueue");
+        pt.put("voice_alone_title", "Desconectado por inatividade");
+        pt.put("voice_alone_desc", "Todos saíram da call, então me desconectei após %d minutos de espera.\n\nA fila foi salva e pode ser restaurada com /previousqueue");
 
         // ButtonListener
         pt.put("button_error", "Ocorreu um erro ao processar sua solicitação. Tente novamente");
@@ -167,6 +225,10 @@ public class Translation {
         pt.put("cmd_nowplaying_desc", "Mostra a música que está tocando agora");
         pt.put("cmd_language_desc", "Define o idioma do bot para este servidor");
         pt.put("cmd_jump_desc", "Pula para uma música específica na fila");
+        pt.put("cmd_switch_desc", "Troca a posição de uma música na fila");
+        pt.put("cmd_erase_desc", "Remove uma música específica da fila");
+        pt.put("cmd_rewind_desc", "Volta para a música anterior");
+        pt.put("cmd_previousqueue_desc", "Restaura uma fila anterior");
         pt.put("cmd_help_desc", "Mostra os comandos disponíveis");
 
         // Activity Status
@@ -183,6 +245,50 @@ public class Translation {
         en.put("jump_invalid", "Invalid position in queue");
         en.put("jump_no_queue", "There are not enough tracks in the queue");
         en.put("jump_done", "Jumping to: %s");
+
+        // Switch Command
+        en.put("switch_no_manager_title", "Error");
+        en.put("switch_no_manager_desc", "There are no tracks in the queue");
+        en.put("switch_invalid_title", "Invalid position");
+        en.put("switch_invalid_desc", "Positions must be greater than zero");
+        en.put("switch_invalid_queue", "One or both positions are out of queue range");
+        en.put("switch_same_position_title", "Same position");
+        en.put("switch_same_position_desc", "The track is already in that position");
+        en.put("switch_title", "Position changed");
+        en.put("switch_desc", "**%s** moved from position %d to %d");
+
+        // Erase Command
+        en.put("erase_no_manager_title", "Error");
+        en.put("erase_no_manager_desc", "There are no tracks in the queue");
+        en.put("erase_invalid_title", "Invalid position");
+        en.put("erase_invalid_desc", "Position must be greater than zero");
+        en.put("erase_not_found", "No track found at that queue position");
+        en.put("erase_title", "Track removed");
+        en.put("erase_desc", "**%s** removed from position %d");
+
+        // Rewind Command
+        en.put("rewind_no_manager_title", "Error");
+        en.put("rewind_no_manager_desc", "There is no track playing");
+        en.put("rewind_no_previous_title", "No previous track");
+        en.put("rewind_no_previous_desc", "There is no previous track to return to");
+        en.put("rewind_title", "Rewinding");
+        en.put("rewind_desc", "Returning to: **%s**");
+
+        // PreviousQueue Command
+        en.put("previousqueue_no_manager_title", "Error");
+        en.put("previousqueue_no_manager_desc", "There is no active player");
+        en.put("previousqueue_no_history_title", "No history");
+        en.put("previousqueue_no_history_desc", "There are no previous queues saved");
+        en.put("previousqueue_title", "Previous Queues");
+        en.put("previousqueue_select_prompt", "Select a previous queue to restore:");
+        en.put("previousqueue_tracks", "%d tracks");
+        en.put("previousqueue_invalid_selection", "Invalid selection");
+        en.put("previousqueue_restored_title", "Queue restored");
+        en.put("previousqueue_restored_desc", "**%d tracks** restored from: %s");
+        en.put("time_seconds_ago", "%d seconds ago");
+        en.put("time_minutes_ago", "%d minutes ago");
+        en.put("time_hours_ago", "%d hours ago");
+        en.put("time_days_ago", "%d days ago");
 
         // Help Command
         en.put("help_title", "Available commands");
@@ -297,11 +403,16 @@ public class Translation {
         en.put("play_load_failed_retry", "Failed to load track after %d attempts: %s");
         en.put("play_playlist_convert_fail_title", "Apple Music Playlists Not Supported");
         en.put("play_playlist_convert_fail_desc", "Apple Music playlists are not yet supported. Use Spotify, YouTube, or Deezer, or paste individual songs from Apple Music!");
+        en.put("play_apple_music_unsupported_title", "Apple Music Not Supported");
+        en.put("play_apple_music_unsupported_desc", "Unfortunately, Apple Music tracks are no longer supported because Apple encrypts their website, making it impossible to extract information.\n\nUse **Spotify**, **YouTube**, or **Deezer** as an alternative!");
+        en.put("play_invalid_track_title", "Invalid track");
+        en.put("play_invalid_track_desc", "This track is unavailable or has been removed from Spotify");
 
         // TrackScheduler
         en.put("track_now_playing", "Now playing");
         en.put("track_artist", "Artist/Channel");
         en.put("track_duration", "Duration");
+        en.put("track_untitled", "Untitled track");
 
         // EmbedFactory
         en.put("embed_requested_by", "Requested by %s");
@@ -309,6 +420,15 @@ public class Translation {
         // Voice State
         en.put("voice_not_in_channel_title", "Not in a voice channel");
         en.put("voice_not_in_channel_desc", "You need to be in a voice channel!");
+        en.put("voice_user_must_be_in_channel", "You need to be in a voice channel to use this command!");
+        en.put("voice_not_same_channel_title", "Different voice channel");
+        en.put("voice_not_same_channel_desc", "You need to be in the same voice channel as me!");
+        en.put("voice_bot_not_in_channel_title", "Bot not in channel");
+        en.put("voice_bot_not_in_channel_desc", "I'm not playing anything right now!");
+        en.put("voice_disconnected_title", "Disconnected");
+        en.put("voice_disconnected_desc", "I was disconnected from the voice channel.\n\nThe queue has been saved and can be restored with /previousqueue");
+        en.put("voice_alone_title", "Disconnected due to inactivity");
+        en.put("voice_alone_desc", "Everyone left the call, so I disconnected after %d minutes of waiting.\n\nThe queue has been saved and can be restored with /previousqueue");
 
         // ButtonListener
         en.put("button_error", "An error occurred while processing your request. Try again");
@@ -330,6 +450,10 @@ public class Translation {
         en.put("cmd_nowplaying_desc", "Shows the currently playing track");
         en.put("cmd_language_desc", "Sets the bot language for this server");
         en.put("cmd_jump_desc", "Jumps to a specific track in the queue");
+        en.put("cmd_switch_desc", "Switches the position of a track in the queue");
+        en.put("cmd_erase_desc", "Removes a specific track from the queue");
+        en.put("cmd_rewind_desc", "Returns to the previous track");
+        en.put("cmd_previousqueue_desc", "Restores a previous queue");
         en.put("cmd_help_desc", "Shows available commands");
 
         // Activity Status
@@ -346,6 +470,50 @@ public class Translation {
         es.put("jump_invalid", "Posición inválida en la cola");
         es.put("jump_no_queue", "No hay suficientes pistas en la cola");
         es.put("jump_done", "Saltando a: %s");
+
+        // Switch Command
+        es.put("switch_no_manager_title", "Error");
+        es.put("switch_no_manager_desc", "No hay pistas en la cola");
+        es.put("switch_invalid_title", "Posición inválida");
+        es.put("switch_invalid_desc", "Las posiciones deben ser mayores que cero");
+        es.put("switch_invalid_queue", "Una o ambas posiciones están fuera del rango de la cola");
+        es.put("switch_same_position_title", "Misma posición");
+        es.put("switch_same_position_desc", "La pista ya está en esa posición");
+        es.put("switch_title", "Posición cambiada");
+        es.put("switch_desc", "**%s** movida de la posición %d a %d");
+
+        // Erase Command
+        es.put("erase_no_manager_title", "Error");
+        es.put("erase_no_manager_desc", "No hay pistas en la cola");
+        es.put("erase_invalid_title", "Posición inválida");
+        es.put("erase_invalid_desc", "La posición debe ser mayor que cero");
+        es.put("erase_not_found", "No se encontró pista en esa posición de la cola");
+        es.put("erase_title", "Pista eliminada");
+        es.put("erase_desc", "**%s** eliminada de la posición %d");
+
+        // Rewind Command
+        es.put("rewind_no_manager_title", "Error");
+        es.put("rewind_no_manager_desc", "No hay ninguna pista reproduciéndose");
+        es.put("rewind_no_previous_title", "Sin pista anterior");
+        es.put("rewind_no_previous_desc", "No hay pista anterior para volver");
+        es.put("rewind_title", "Retrocediendo");
+        es.put("rewind_desc", "Volviendo a: **%s**");
+
+        // PreviousQueue Command
+        es.put("previousqueue_no_manager_title", "Error");
+        es.put("previousqueue_no_manager_desc", "No hay reproductor activo");
+        es.put("previousqueue_no_history_title", "Sin historial");
+        es.put("previousqueue_no_history_desc", "No hay colas anteriores guardadas");
+        es.put("previousqueue_title", "Colas Anteriores");
+        es.put("previousqueue_select_prompt", "Selecciona una cola anterior para restaurar:");
+        es.put("previousqueue_tracks", "%d pistas");
+        es.put("previousqueue_invalid_selection", "Selección inválida");
+        es.put("previousqueue_restored_title", "Cola restaurada");
+        es.put("previousqueue_restored_desc", "**%d pistas** restauradas de: %s");
+        es.put("time_seconds_ago", "hace %d segundos");
+        es.put("time_minutes_ago", "hace %d minutos");
+        es.put("time_hours_ago", "hace %d horas");
+        es.put("time_days_ago", "hace %d días");
 
         // Help Command
         es.put("help_title", "Comandos disponibles");
@@ -460,11 +628,16 @@ public class Translation {
         es.put("play_load_failed_retry", "Falló al cargar pista después de %d intentos: %s");
         es.put("play_playlist_convert_fail_title", "Playlists de Apple Music no soportadas");
         es.put("play_playlist_convert_fail_desc", "Las playlists de Apple Music aún no son soportadas. ¡Usa Spotify, YouTube o Deezer, o pega canciones individuales de Apple Music!");
+        es.put("play_apple_music_unsupported_title", "Apple Music no soportado");
+        es.put("play_apple_music_unsupported_desc", "Desafortunadamente, las pistas de Apple Music ya no son soportadas porque Apple encripta su sitio web, haciendo imposible extraer información.\n\n¡Use **Spotify**, **YouTube** o **Deezer** como alternativa!");
+        es.put("play_invalid_track_title", "Pista inválida");
+        es.put("play_invalid_track_desc", "Esta pista no está disponible o ha sido eliminada de Spotify");
 
         // TrackScheduler
         es.put("track_now_playing", "Reproduciendo ahora");
         es.put("track_artist", "Artista/Canal");
         es.put("track_duration", "Duración");
+        es.put("track_untitled", "Pista sin nombre");
 
         // EmbedFactory
         es.put("embed_requested_by", "Solicitado por %s");
@@ -472,6 +645,15 @@ public class Translation {
         // Voice State
         es.put("voice_not_in_channel_title", "No está en un canal de voz");
         es.put("voice_not_in_channel_desc", "¡Necesitas estar en un canal de voz!");
+        es.put("voice_user_must_be_in_channel", "¡Necesitas estar en un canal de voz para usar este comando!");
+        es.put("voice_not_same_channel_title", "Canal de voz diferente");
+        es.put("voice_not_same_channel_desc", "¡Necesitas estar en el mismo canal de voz que yo!");
+        es.put("voice_bot_not_in_channel_title", "Bot no está en canal");
+        es.put("voice_bot_not_in_channel_desc", "¡No estoy reproduciendo nada en este momento!");
+        es.put("voice_disconnected_title", "Desconectado");
+        es.put("voice_disconnected_desc", "Fui desconectado del canal de voz.\n\nLa cola ha sido guardada y puede ser restaurada con /previousqueue");
+        es.put("voice_alone_title", "Desconectado por inactividad");
+        es.put("voice_alone_desc", "Todos salieron de la llamada, así que me desconecté después de %d minutos de espera.\n\nLa cola ha sido guardada y puede ser restaurada con /previousqueue");
 
         // ButtonListener
         es.put("button_error", "Ocurrió un error al procesar su solicitud. Inténtelo de nuevo");
@@ -493,6 +675,10 @@ public class Translation {
         es.put("cmd_nowplaying_desc", "Muestra la pista que se está reproduciendo ahora");
         es.put("cmd_language_desc", "Establece el idioma del bot para este servidor");
         es.put("cmd_jump_desc", "Salta a una pista específica en la cola");
+        es.put("cmd_switch_desc", "Cambia la posición de una pista en la cola");
+        es.put("cmd_erase_desc", "Elimina una pista específica de la cola");
+        es.put("cmd_rewind_desc", "Vuelve a la pista anterior");
+        es.put("cmd_previousqueue_desc", "Restaura una cola anterior");
         es.put("cmd_help_desc", "Muestra los comandos disponibles");
 
         // Activity Status

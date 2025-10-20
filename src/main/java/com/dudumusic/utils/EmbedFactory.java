@@ -14,6 +14,7 @@ public class EmbedFactory {
     private static final Color COLOR_INFO = new Color(88, 101, 242);
     private static final Color COLOR_WARNING = new Color(254, 231, 92);
     private static final Color COLOR_MUSIC = new Color(114, 137, 218);
+    private static final Color COLOR_NOW_PLAYING = new Color(188, 44, 116);
 
     public static MessageEmbed success(String title, String description) {
         return new EmbedBuilder()
@@ -54,6 +55,12 @@ public class EmbedFactory {
     public static EmbedBuilder musicBuilder() {
         return new EmbedBuilder()
                 .setColor(COLOR_MUSIC)
+                .setTimestamp(Instant.now());
+    }
+
+    public static EmbedBuilder nowPlayingBuilder() {
+        return new EmbedBuilder()
+                .setColor(COLOR_NOW_PLAYING)
                 .setTimestamp(Instant.now());
     }
 

@@ -4,6 +4,7 @@ import com.dudumusic.audio.MusicManager;
 import com.dudumusic.commands.Command;
 import com.dudumusic.core.Translation;
 import com.dudumusic.utils.EmbedFactory;
+import com.dudumusic.utils.VoiceValidator;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.slf4j.Logger;
@@ -33,10 +34,15 @@ public class StopCommand implements Command {
     @Override
     public void execute(SlashCommandInteractionEvent event) {
         long guildId = event.getGuild().getIdLong();
+
+        if (!VoiceValidator.validate(event, true)) {
+            return;
+        }
+
         MusicManager musicManager = MusicManager.getManager(guildId);
 
         musicManager.getPlayer().stopTrack();
-        musicManager.getScheduler().clearQueue();
+        musicManager.getScheduler().clearQueue(true, "Fila limpa com /stop");
 
         event.getGuild().getAudioManager().closeAudioConnection();
 
