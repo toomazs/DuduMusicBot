@@ -1,0 +1,20 @@
+services:
+  dudu-music-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dudu-music-bot
+    restart: unless-stopped
+    environment:
+      - TOKEN=${TOKEN}
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
+    env_file:
+      - .env
+    mem_limit: 1.5g
+    mem_reservation: 512m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
